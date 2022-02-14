@@ -15,7 +15,3 @@ EffectiveQbOnline::Engine.routes.draw do
   end
 
 end
-
-
-# user_github_omniauth_authorize GET|POST  /users/auth/github(.:format)                                                             users/omniauth_callbacks#passthru
-# user_github_omniauth_callback GET|POST  /users/auth/github/callback(.:format)                                                    users/omniauth_callbacks#github

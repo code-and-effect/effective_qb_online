@@ -16,16 +16,18 @@ module EffectiveQbOnline
   include EffectiveGem
 
   def self.oauth2_client
-    client_id = oauth_client_id
-    secret = oauth_client_secret
-
-    params = {
+    options = {
       site: "https://appcenter.intuit.com/connect/oauth2",
       authorize_url: "https://appcenter.intuit.com/connect/oauth2",
       token_url: "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer"
     }
 
-    OAuth2::Client.new(client_id, secret, params)
+    OAuth2::Client.new(oauth_client_id, oauth_client_secret, options)
+  end
+
+  def self.quickbooks(realm: nil)
+    realm ||= Effective::QbRealm.first!
+    Effective::QuickbooksApi.new(realm: realm)
   end
 
 end
