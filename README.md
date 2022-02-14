@@ -86,9 +86,6 @@ end
 ## Configuring Quickbooks Company
 
 
-
-
-
 ## License
 
 MIT License.  Copyright [Code and Effect Inc.](http://www.codeandeffect.com/)

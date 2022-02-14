@@ -32,31 +32,5 @@ module Effective
       realm_id
     end
 
-    def with_authenticated_request(max_attempts: 3, &block)
-      raise('expected a block') unless block_given?
-
-      attempts = 0
-
-      begin
-        token = OAuth2::AccessToken.new(EffectiveQbOnline.oauth2_client, access_token, refresh_token: refresh_token)
-        yield(token)
-      rescue OAuth2::Error, Quickbooks::AuthorizationFailure => e
-        attempts += 1
-        raise "unable to refresh Quickbooks OAuth2 token" if attempts >= max_attempts
-
-        # Refresh
-        refreshed = token.refresh!
-
-        update!(
-          access_token: refreshed.token,
-          refresh_token: refreshed.refresh_token,
-          access_token_expires_at: Time.at(refreshed.expires_at),
-          refresh_token_expires_at: (Time.at(refreshed.expires_at) + 100.days)
-        )
-
-        retry
-      end
-    end
-
   end
 end

@@ -12,6 +12,7 @@ EffectiveQbOnline::Engine.routes.draw do
   end
 
   namespace :admin do
+    get '/quickbooks', to: 'qb_online#index', as: :quickbooks
   end
 
 end

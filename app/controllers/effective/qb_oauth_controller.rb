@@ -3,6 +3,10 @@
 module Effective
   class QbOauthController < ApplicationController
     before_action(:authenticate_user!) if defined?(Devise)
+
+    # Any user that has priviledges with the Quickbooks Online company could authenticate
+    # But we assume this user also has admin priviledges on our site
+    # This should only be done once anyway
     before_action { EffectiveResources.authorize!(self, :admin, :effective_qb_online) }
 
     def authorize

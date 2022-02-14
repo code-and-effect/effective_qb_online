@@ -25,9 +25,11 @@ module EffectiveQbOnline
     OAuth2::Client.new(oauth_client_id, oauth_client_secret, options)
   end
 
-  def self.quickbooks(realm: nil)
-    realm ||= Effective::QbRealm.first!
-    Effective::QuickbooksApi.new(realm: realm)
+  def self.api(realm: nil)
+    realm ||= Effective::QbRealm.first
+    return nil if realm.blank?
+
+    Effective::QbApi.new(realm: realm)
   end
 
 end

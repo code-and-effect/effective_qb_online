@@ -1,0 +1,36 @@
+%h1.effective-page-title= @page_title
+
+= card('Company') do
+  %table.table.table-sm
+    %tbody
+      %tr
+        %th Access Token
+        %td= @api.realm.access_token
+
+        %th Access Token Expires At
+        %td= @api.realm.access_token_expires_at
+
+= card('Customers') do
+  %table.table.table-sm
+    %tbody
+      - @api.customers.each do |customer|
+        %tr
+          %td= customer.id
+          %td= customer.display_name
+          %td= customer.attributes[:billing_address]
+
+= card('Invoices') do
+  %table.table.table-sm
+    %tbody
+      %t
+
+      - @api.invoices.each do |invoice|
+        %tr
+          %td= invoice.id
+          %td= invoice.txn_date
+          %td
+            = invoice.customer_ref.name
+            (#{invoice.customer_ref.value})
+
+          %td= number_to_currency(invoice.total)
+          %td= number_to_currency(invoice.txn_tax_detail.total_tax)
