@@ -29,7 +29,12 @@ class ActiveSupport::TestCase
   include EffectiveQbOnlineTestHelper
 end
 
+# Quickbooks Online Specific Stuff
 Quickbooks.sandbox_mode = true
+
+if ENV['QB_REALM_ID'].blank?
+  require "dotenv/load"
+end
 
 # Load the seeds
 load "#{__dir__}/../db/seeds.rb"
