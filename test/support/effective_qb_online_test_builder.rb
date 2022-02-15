@@ -1,5 +1,4 @@
 module EffectiveQbOnlineTestBuilder
-
   def create_user!
     build_user.tap { |user| user.save! }
   end

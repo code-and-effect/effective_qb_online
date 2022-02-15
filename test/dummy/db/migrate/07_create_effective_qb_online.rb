@@ -1,6 +1,5 @@
-class CreateEffectiveQbOnline < ActiveRecord::Migration[6.0]
+class CreateEffectiveQbOnline < ActiveRecord::Migration[6.1]
   def change
-
     create_table :qb_realms do |t|
       t.string :realm_id
 
@@ -12,6 +11,5 @@ class CreateEffectiveQbOnline < ActiveRecord::Migration[6.0]
 
       t.timestamps
     end
-
   end
 end

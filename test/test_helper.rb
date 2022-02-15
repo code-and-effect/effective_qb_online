@@ -29,5 +29,8 @@ class ActiveSupport::TestCase
   include EffectiveQbOnlineTestHelper
 end
 
+Quickbooks.sandbox_mode = true
+
 # Load the seeds
 load "#{__dir__}/../db/seeds.rb"
+load "#{__dir__}/fixtures/realm.rb"
