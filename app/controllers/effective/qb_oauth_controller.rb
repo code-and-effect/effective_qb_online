@@ -38,7 +38,8 @@ module Effective
       )
 
       flash[:success] = 'Successfully connected with Quickbooks Online'
-      redirect_to(root_path)
+
+      redirect_to(effective_qb_online.admin_quickbooks_path)
     end
 
     private

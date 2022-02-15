@@ -22,8 +22,13 @@ require 'support/effective_qb_online_test_builder'
 require 'support/effective_qb_online_test_helper'
 require 'pry-byebug'
 
+require 'effective_orders'
+require "#{EffectiveOrders.gem_path}/test/support/effective_orders_test_builder"
+
 class ActiveSupport::TestCase
   include Warden::Test::Helpers
+
+  include EffectiveOrdersTestBuilder
 
   include EffectiveQbOnlineTestBuilder
   include EffectiveQbOnlineTestHelper

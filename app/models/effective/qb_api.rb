@@ -10,6 +10,14 @@ module Effective
       @realm = realm
     end
 
+    # Singular
+    def company_info
+      with_authenticated_request do |access_token|
+        service = Quickbooks::Service::CompanyInfo.new(company_id: realm.company_id, access_token: access_token)
+        service.fetch_by_id(realm.company_id)
+      end
+    end
+
     def customers
       with_authenticated_request do |access_token|
         service = Quickbooks::Service::Customer.new(company_id: realm.company_id, access_token: access_token)
@@ -17,10 +25,24 @@ module Effective
       end
     end
 
+    def customers_count
+      with_authenticated_request do |access_token|
+        service = Quickbooks::Service::Customer.new(company_id: realm.company_id, access_token: access_token)
+        service.query('SELECT COUNT(*) FROM Customer').total_count
+      end
+    end
+
     def invoices
       with_authenticated_request do |access_token|
         service = Quickbooks::Service::Invoice.new(company_id: realm.company_id, access_token: access_token)
         service.query()
+      end
+    end
+
+    def invoices_count
+      with_authenticated_request do |access_token|
+        service = Quickbooks::Service::Invoice.new(company_id: realm.company_id, access_token: access_token)
+        service.query('SELECT COUNT(*) FROM Invoice').total_count
       end
     end
 
