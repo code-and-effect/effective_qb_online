@@ -164,6 +164,23 @@ ActiveRecord::Schema.define(version: 7) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "qb_invoice_items", force: :cascade do |t|
+    t.integer "qb_invoice_id"
+    t.integer "order_item_id"
+    t.string "item_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "qb_invoices", force: :cascade do |t|
+    t.integer "order_id"
+    t.text "result"
+    t.string "status"
+    t.text "status_steps"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   create_table "qb_realms", force: :cascade do |t|
     t.string "realm_id"
     t.text "access_token"

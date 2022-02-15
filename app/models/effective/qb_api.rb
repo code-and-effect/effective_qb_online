@@ -46,6 +46,17 @@ module Effective
       end
     end
 
+    def item(id: nil, name: nil)
+      raise('expected either an id or name') unless id.present? || name.present?
+
+      with_authenticated_request do |access_token|
+        service = Quickbooks::Service::Item.new(company_id: realm.company_id, access_token: access_token)
+
+        return service.find_by(:id, id) if id.present?
+        return service.find_by(:name, name) if name.present?
+      end
+    end
+
     private
 
     def with_authenticated_request(max_attempts: 3, &block)
