@@ -9,3 +9,9 @@
 /test/dummy/storage/
 /test/dummy/tmp/
 .byebug_history
+
+.env
+/.env
+/.env.local
+/.env.production
+.vscode
