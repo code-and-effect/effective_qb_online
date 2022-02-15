@@ -3,6 +3,9 @@ class CreateEffectiveQbOnline < ActiveRecord::Migration[6.1]
     create_table :qb_realms do |t|
       t.string :realm_id
 
+      t.integer :deposit_to_account_id
+      t.integer :payment_method_id
+
       t.text :access_token
       t.datetime :access_token_expires_at
 
@@ -12,8 +15,9 @@ class CreateEffectiveQbOnline < ActiveRecord::Migration[6.1]
       t.timestamps
     end
 
-    create_table :qb_invoices do |t|
+    create_table :qb_receipts do |t|
       t.integer :order_id
+      t.integer :customer_id
 
       t.text :result
 
@@ -23,11 +27,11 @@ class CreateEffectiveQbOnline < ActiveRecord::Migration[6.1]
       t.timestamps
     end
 
-    create_table :qb_invoice_items do |t|
-      t.integer :qb_invoice_id
+    create_table :qb_receipt_items do |t|
+      t.integer :qb_receipt_id
       t.integer :order_item_id
 
-      t.string :item_id
+      t.integer :item_id
 
       t.timestamps
     end
