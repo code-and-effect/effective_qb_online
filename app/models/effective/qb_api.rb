@@ -24,7 +24,7 @@ module Effective
     end
 
     def accounts
-      with_service('Account') { |service| service.all() }
+      with_service('Account') { |service| service.all }
     end
 
     # Only accounts we can use for the Deposit to Account setting
@@ -37,7 +37,7 @@ module Effective
     end
 
     def items
-      with_service('Item') { |service| service.all() }
+      with_service('Item') { |service| service.all }
     end
 
     def items_collection
@@ -57,7 +57,7 @@ module Effective
     end
 
     def payment_methods
-      with_service('PaymentMethod') { |service| service.all() }
+      with_service('PaymentMethod') { |service| service.all }
     end
 
     def payment_methods_collection
@@ -95,7 +95,7 @@ module Effective
 
       with_service('Customer') do |service|
         customer = Quickbooks::Model::Customer.new(
-          primary_email_address: Quickbooks::Model::EmailAddress.new(user.email),
+          primary_email_address: Quickbooks::Model::EmailAddress.new(user.email)
         )
 
         if user.respond_to?(:first_name) && user.respond_to?(:last_name)
