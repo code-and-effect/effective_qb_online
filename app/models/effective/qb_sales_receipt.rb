@@ -1,42 +1,41 @@
 module Effective
-  class QbReceiptTool
-
-    # Create a QbReceipt and QbReceiptItems from an Effective::Order
-    def create_qb_receipt!(order:)
-      raise('expected an Effective::Order') unless order.kind_of?(Effective::Order)
-
-      qb_receipt = Effective::QbReceipt.where(order: order).first_or_initialize
-
-      order.order_items.each do |order_item|
-        qb_receipt_item = qb_receipt.qb_receipt_item(order_item: order_item)
-
-        item_id = order_item.purchasable.try(:qb_item_id)
-        item_name = order_item.purchasable.try(:qb_item_name)
-
-        if item_id.blank? && item_name.present?
-          item_id = api.item(name: item_name)&.id
-        end
-
-        qb_receipt_item.assign_attributes(item_id: item_id)
-      end
-
-      qb_receipt.save!
-      qb_receipt
-    end
+  class QbSalesReceipt
 
     # Synchronize a QbReceipt with Quickbooks
     def sync_qb_receipt!(receipt:)
-      sales_receipt = build_qb_receipt(receipt: receipt)
-      api.create_sales_receipt(sales_receipt: sales_receipt)
+      begin
+        sales_receipt = build_sales_receipt(receipt: receipt)
+        sales_receipt = api.create_sales_receipt(sales_receipt: sales_receipt)
+
+        receipt.assign_attributes(result: 'completed successfully', sales_receipt_id: sales_receipt.id)
+        receipt.complete!
+      rescue => e
+        receipt.assign_attributes(result: e.message)
+        receipt.error!
+      end
+
+      true
     end
 
-    def build_qb_receipt(receipt:)
+    # Build the Quickbooks SalesReceipt from a QbReceipt
+    def build_sales_receipt(receipt:)
       raise('expected a persisted Effective::QbReceipt') unless receipt.kind_of?(Effective::QbReceipt) && receipt.persisted?
 
       order = receipt.order
       raise('expected a purchased Effective::Order') unless order.purchased?
 
-      customer_id = receipt.customer_id
+      user = order.user
+      raise('expected a user with an email') unless user.respond_to?(:email)
+
+      realm = api.realm
+      raise('missing Deposit to Account') unless realm.deposit_to_account_id.present?
+      raise('missing Payment Method') unless realm.payment_method_id.present?
+
+      # Find or build customer
+      if receipt.customer_id.blank?
+        customer = api.find_or_create_customer(user: user)
+        receipt.update!(customer_id: customer.id)
+      end
 
       sales_receipt = Quickbooks::Model::SalesReceipt.new(
         customer_id: receipt.customer_id,
@@ -50,16 +49,20 @@ module Effective
       sales_receipt.auto_doc_number!
 
       # Add all the line items
-      order.order_items.each do |order_item|
+      receipt.qb_receipt_items.each do |receipt_item|
+        order_item = receipt_item.order_item
+
         line_item = Quickbooks::Model::Line.new(
-          amount: order_item.subtotal,
+          amount: (order_item.subtotal / 100.0).round(2),
           description: order_item.name
         )
 
         line_item.sales_item! do |line|
-          line.unit_price = order_item.price
+          line.unit_price = (order_item.price / 100.0).round(2)
           line.quantity = order_item.quantity
-          line.item_id = order_item.quickbooks_item_id
+
+          # This comes from the Receipt Item so we can change it.
+          line.item_id = receipt_item.item_id
         end
 
         sales_receipt.line_items << line_item
@@ -72,9 +75,6 @@ module Effective
 
     def api
       @api ||= EffectiveQbOnline.api
-    end
-
-    def deposit_to_account_id
     end
 
   end

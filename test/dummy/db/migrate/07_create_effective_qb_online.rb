@@ -17,7 +17,9 @@ class CreateEffectiveQbOnline < ActiveRecord::Migration[6.1]
 
     create_table :qb_receipts do |t|
       t.integer :order_id
+
       t.string :customer_id
+      t.string :sales_receipt_id
 
       t.text :result
 

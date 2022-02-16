@@ -11,6 +11,8 @@ module Admin
     def index
       @api = EffectiveQbOnline.api
 
+      authorize! :index, Effective::QbRealm
+
       render(@api.present? ? 'index' : 'instructions')
     end
 

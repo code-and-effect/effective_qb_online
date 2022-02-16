@@ -1,0 +1,40 @@
+= card('Company') do
+  - company_info = api.company_info
+
+  %table.table.table-sm
+    %tbody
+      %tr
+        %td Name
+        %td= company_info.company_name
+
+      %tr
+        %td Country
+        %td= company_info.country
+
+      %tr
+        %td Customers
+        %td= pluralize(api.customers_count, 'customer')
+
+      %tr
+        %td Invoices
+        %td= pluralize(api.invoices_count, 'invoice')
+
+      %tr
+        %td OAuth2 Connection
+        %td= link_to('Reconnect to Quickbooks Online', effective_qb_online.quickbooks_oauth_path)
+
+      %tr
+        %td Deposit to Account
+        %td
+          = effective_form_with(model: [:admin, api.realm], engine: true) do |f|
+            .row
+              .col= f.select :deposit_to_account_id, api.accounts_collection, grouped: true, label: false
+              .col= f.save
+
+      %tr
+        %td Payment Method
+        %td
+          = effective_form_with(model: [:admin, api.realm], engine: true) do |f|
+            .row
+              .col= f.select :payment_method_id, api.payment_methods_collection, label: false
+              .col= f.save

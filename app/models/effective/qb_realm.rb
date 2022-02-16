@@ -28,7 +28,7 @@ module Effective
     validates :refresh_token_expires_at, presence: true
 
     def to_s
-      realm_id.presence || 'New Quickbooks Realm'
+      'Quickbooks Online Settings'
     end
 
     def company_id

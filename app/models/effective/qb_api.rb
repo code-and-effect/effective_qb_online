@@ -10,6 +10,54 @@ module Effective
       @realm = realm
     end
 
+    def app_url
+      Quickbooks.sandbox_mode ? 'https://app.sandbox.qbo.intuit.com/app' : 'https://app.qbo.intuit.com/app'
+    end
+
+    def sales_receipt_url(obj)
+      "#{app_url}/salesreceipt?txnId=#{obj.try(:sales_receipt_id) || obj.try(:id) || obj}"
+    end
+
+    def accounts
+      with_authenticated_request do |access_token|
+        service = Quickbooks::Service::Account.new(company_id: realm.company_id, access_token: access_token)
+        service.all()
+      end
+    end
+
+    def accounts_collection
+      accounts
+        .select { |account| ['Bank', 'Other Current Asset'].include?(account.account_type) }
+        .sort_by { |account| [account.account_type, account.name] }
+        .map { |account| [account.name, account.id, account.account_type] }
+        .group_by(&:third)
+    end
+
+    def items
+      with_authenticated_request do |access_token|
+        service = Quickbooks::Service::Item.new(company_id: realm.company_id, access_token: access_token)
+        service.all()
+      end
+    end
+
+    def items_collection
+      items
+        .sort_by { |item| [item.type, item.name] }
+        .map { |item| [item.name, item.id, item.type] }
+        .group_by(&:third)
+    end
+
+    def payment_methods
+      with_authenticated_request do |access_token|
+        service = Quickbooks::Service::PaymentMethod.new(company_id: realm.company_id, access_token: access_token)
+        service.all()
+      end
+    end
+
+    def payment_methods_collection
+      payment_methods.sort_by(&:name).map { |payment_method| [payment_method.name, payment_method.id] }
+    end
+
     # Singular
     def company_info
       with_authenticated_request do |access_token|
@@ -21,7 +69,7 @@ module Effective
     def customers
       with_authenticated_request do |access_token|
         service = Quickbooks::Service::Customer.new(company_id: realm.company_id, access_token: access_token)
-        service.query()
+        service.all()
       end
     end
 
@@ -35,7 +83,7 @@ module Effective
     def invoices
       with_authenticated_request do |access_token|
         service = Quickbooks::Service::Invoice.new(company_id: realm.company_id, access_token: access_token)
-        service.query()
+        service.all()
       end
     end
 
@@ -54,6 +102,62 @@ module Effective
 
         return service.find_by(:id, id) if id.present?
         return service.find_by(:name, name) if name.present?
+      end
+    end
+
+    def find_or_create_customer(user:)
+      find_customer(user: user) || create_customer(user: user)
+    end
+
+    def find_customer(user:)
+      raise('expected a user that responds to email') unless user.respond_to?(:email)
+
+      with_authenticated_request do |access_token|
+        service = Quickbooks::Service::Customer.new(company_id: realm.company_id, access_token: access_token)
+
+        # Find by email
+        customer = service.find_by(:PrimaryEmailAddr, user.email)&.first
+        return customer if customer.present?
+
+        # Find by given name and family name
+        if user.respond_to?(:first_name) && user.respond_to?(:last_name)
+          customer = service.query("SELECT * FROM Customer WHERE GivenName LIKE '#{user.first_name}' AND FamilyName LIKE '#{user.last_name}'")&.first
+          return customer if customer.present?
+        end
+
+        # Find by display name
+        customer = service.find_by(:display_name, user.to_s)&.first
+        return customer if customer.present?
+      end
+
+      nil
+    end
+
+    def create_customer(user:)
+      raise('expected a user that responds to email') unless user.respond_to?(:email)
+
+      with_authenticated_request do |access_token|
+        service = Quickbooks::Service::Customer.new(company_id: realm.company_id, access_token: access_token)
+
+        customer = Quickbooks::Model::Customer.new(
+          primary_email_address: Quickbooks::Model::EmailAddress.new(user.email),
+        )
+
+        if user.respond_to?(:first_name) && user.respond_to?(:last_name)
+          customer.given_name = user.first_name
+          customer.family_name = user.last_name
+        else
+          customer.display_name = user.to_s
+        end
+
+        service.create(customer)
+      end
+    end
+
+    def delete_customer(customer:)
+      with_authenticated_request do |access_token|
+        service = Quickbooks::Service::Customer.new(company_id: realm.company_id, access_token: access_token)
+        service.delete(customer)
       end
     end
 

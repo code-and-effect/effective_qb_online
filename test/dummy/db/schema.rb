@@ -187,6 +187,7 @@ ActiveRecord::Schema.define(version: 7) do
   create_table "qb_receipts", force: :cascade do |t|
     t.integer "order_id"
     t.string "customer_id"
+    t.string "sales_receipt_id"
     t.text "result"
     t.string "status"
     t.text "status_steps"
