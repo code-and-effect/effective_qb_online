@@ -36,23 +36,16 @@ module Effective
     end
 
     # Create a QbReceipt from an Effective::Order
-    def self.create_from_order!(order:)
+    def self.create_from_order!(order)
       raise('expected an Effective::Order') unless order.kind_of?(Effective::Order)
 
       qb_receipt = Effective::QbReceipt.where(order: order).first_or_initialize
 
       order.order_items.each do |order_item|
         qb_receipt_item = qb_receipt.qb_receipt_item(order_item: order_item)
-        qb_receipt_item.item_id = order_item.purchasable.try(:qb_item_id)
 
-        # item_id = order_item.purchasable.try(:qb_item_id)
-        # item_name = order_item.purchasable.try(:qb_item_name)
-
-        # if item_id.blank? && item_name.present?
-        #   item_id = api.item(name: item_name)&.id
-        # end
-
-        # qb_receipt_item.assign_attributes(item_id: item_id)
+        # Assign the item ID if we know it right away
+        qb_receipt_item.item_id ||= order_item.purchasable.try(:qb_item_id)
       end
 
       qb_receipt.save!
@@ -71,7 +64,21 @@ module Effective
 
     def sync!
       save!
-      QbSalesReceipt.new.sync_qb_receipt!(receipt: self)
+
+      api = EffectiveQbOnline.api
+
+      begin
+        sales_receipt = Effective::QbSalesReceipt.build_from_receipt!(receipt: self, api: api)
+        sales_receipt = api.create_sales_receipt(sales_receipt: sales_receipt)
+
+        assign_attributes(result: 'completed successfully', sales_receipt_id: sales_receipt.id)
+        complete!
+      rescue => e
+        assign_attributes(result: e.message)
+        error!
+      end
+
+      true
     end
 
     def complete!

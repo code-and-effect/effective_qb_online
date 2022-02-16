@@ -1,25 +1,12 @@
 module Effective
   class QbSalesReceipt
 
-    # Synchronize a QbReceipt with Quickbooks
-    def sync_qb_receipt!(receipt:)
-      begin
-        sales_receipt = build_sales_receipt(receipt: receipt)
-        sales_receipt = api.create_sales_receipt(sales_receipt: sales_receipt)
-
-        receipt.assign_attributes(result: 'completed successfully', sales_receipt_id: sales_receipt.id)
-        receipt.complete!
-      rescue => e
-        receipt.assign_attributes(result: e.message)
-        receipt.error!
-      end
-
-      true
-    end
-
     # Build the Quickbooks SalesReceipt from a QbReceipt
-    def build_sales_receipt(receipt:)
+    def self.build_from_receipt!(receipt, api: nil)
       raise('expected a persisted Effective::QbReceipt') unless receipt.kind_of?(Effective::QbReceipt) && receipt.persisted?
+
+      api ||= EffectiveQbOnline.api
+      raise('expected a connected Quickbooks API') unless api.present?
 
       order = receipt.order
       raise('expected a purchased Effective::Order') unless order.purchased?
@@ -69,12 +56,6 @@ module Effective
       end
 
       sales_receipt
-    end
-
-    private
-
-    def api
-      @api ||= EffectiveQbOnline.api
     end
 
   end

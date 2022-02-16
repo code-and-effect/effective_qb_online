@@ -5,7 +5,6 @@ require 'effective_qb_online/engine'
 require 'effective_qb_online/version'
 
 module EffectiveQbOnline
-
   def self.config_keys
     [
       :oauth_client_id, :oauth_client_secret,
@@ -16,13 +15,13 @@ module EffectiveQbOnline
   include EffectiveGem
 
   def self.oauth2_client
-    options = {
-      site: "https://appcenter.intuit.com/connect/oauth2",
-      authorize_url: "https://appcenter.intuit.com/connect/oauth2",
-      token_url: "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer"
-    }
-
-    OAuth2::Client.new(oauth_client_id, oauth_client_secret, options)
+    OAuth2::Client.new(
+      oauth_client_id,
+      oauth_client_secret,
+      site: 'https://appcenter.intuit.com/connect/oauth2',
+      authorize_url: 'https://appcenter.intuit.com/connect/oauth2',
+      token_url: 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer'
+    )
   end
 
   def self.api(realm: nil)

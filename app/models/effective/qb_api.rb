@@ -18,6 +18,14 @@ module Effective
       "#{app_url}/salesreceipt?txnId=#{obj.try(:sales_receipt_id) || obj.try(:id) || obj}"
     end
 
+    def customers_url
+      "#{app_url}/customers"
+    end
+
+    def customer_url(obj)
+      "#{app_url}/customerdetail?nameId=#{obj.try(:customer_id) || obj.try(:id) || obj}"
+    end
+
     # Singular
     def company_info
       with_service('CompanyInfo') { |service| service.fetch_by_id(realm.company_id) }
@@ -95,14 +103,13 @@ module Effective
 
       with_service('Customer') do |service|
         customer = Quickbooks::Model::Customer.new(
-          primary_email_address: Quickbooks::Model::EmailAddress.new(user.email)
+          primary_email_address: Quickbooks::Model::EmailAddress.new(user.email),
+          display_name: user.to_s
         )
 
         if user.respond_to?(:first_name) && user.respond_to?(:last_name)
           customer.given_name = user.first_name
           customer.family_name = user.last_name
-        else
-          customer.display_name = user.to_s
         end
 
         service.create(customer)

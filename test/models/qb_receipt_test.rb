@@ -5,7 +5,7 @@ class QbReceiptTest < ActiveSupport::TestCase
   test 'can create an receipt from order' do
     order = create_effective_order!()
 
-    receipt = Effective::QbReceipt.create_from_order!(order: order)
+    receipt = Effective::QbReceipt.create_from_order!(order)
     assert receipt.valid?
 
     assert_equal receipt.order, order
