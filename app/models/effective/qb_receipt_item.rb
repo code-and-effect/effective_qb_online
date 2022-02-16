@@ -6,7 +6,7 @@ module Effective
     log_changes(to: :qb_receipt) if respond_to?(:log_changes)
 
     effective_resource do
-      item_id       :integer
+      item_id       :string
 
       timestamps
     end

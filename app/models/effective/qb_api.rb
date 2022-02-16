@@ -46,7 +46,7 @@ module Effective
       end
     end
 
-    def item(id: nil, name: nil)
+    def find_item(id: nil, name: nil)
       raise('expected either an id or name') unless id.present? || name.present?
 
       with_authenticated_request do |access_token|
@@ -54,6 +54,13 @@ module Effective
 
         return service.find_by(:id, id) if id.present?
         return service.find_by(:name, name) if name.present?
+      end
+    end
+
+    def create_sales_receipt(sales_receipt:)
+      with_authenticated_request do |access_token|
+        service = Quickbooks::Service::SalesReceipt.new(company_id: realm.company_id, access_token: access_token)
+        service.create(sales_receipt)
       end
     end
 

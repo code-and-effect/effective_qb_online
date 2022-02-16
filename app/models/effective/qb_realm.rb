@@ -6,6 +6,9 @@ module Effective
     effective_resource do
       realm_id                    :string
 
+      deposit_to_account_id       :string
+      payment_method_id           :string
+
       access_token                :text
       access_token_expires_at     :datetime
 

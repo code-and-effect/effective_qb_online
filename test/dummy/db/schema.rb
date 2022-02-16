@@ -166,8 +166,8 @@ ActiveRecord::Schema.define(version: 7) do
 
   create_table "qb_realms", force: :cascade do |t|
     t.string "realm_id"
-    t.integer "deposit_to_account_id"
-    t.integer "payment_method_id"
+    t.string "deposit_to_account_id"
+    t.string "payment_method_id"
     t.text "access_token"
     t.datetime "access_token_expires_at"
     t.text "refresh_token"
@@ -179,14 +179,14 @@ ActiveRecord::Schema.define(version: 7) do
   create_table "qb_receipt_items", force: :cascade do |t|
     t.integer "qb_receipt_id"
     t.integer "order_item_id"
-    t.integer "item_id"
+    t.string "item_id"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "qb_receipts", force: :cascade do |t|
     t.integer "order_id"
-    t.integer "customer_id"
+    t.string "customer_id"
     t.text "result"
     t.string "status"
     t.text "status_steps"

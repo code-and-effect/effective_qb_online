@@ -10,10 +10,8 @@ module Effective
     acts_as_statused(:ready, :completed, :errored)
 
     effective_resource do
-      # QuickBooks SalesReceipt
-      customer_id               :integer
-      deposit_to_account_id     :integer
-      payment_method_id         :integer
+      # QuickBooks Customer
+      customer_id               :string
 
       # Any error message from our sync
       result                    :text
