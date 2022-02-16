@@ -20,17 +20,11 @@ module Effective
 
     # Singular
     def company_info
-      with_authenticated_request do |access_token|
-        service = Quickbooks::Service::CompanyInfo.new(company_id: realm.company_id, access_token: access_token)
-        service.fetch_by_id(realm.company_id)
-      end
+      with_service('CompanyInfo') { |service| service.fetch_by_id(realm.company_id) }
     end
 
     def accounts
-      with_authenticated_request do |access_token|
-        service = Quickbooks::Service::Account.new(company_id: realm.company_id, access_token: access_token)
-        service.all()
-      end
+      with_service('Account') { |service| service.all() }
     end
 
     # Only accounts we can use for the Deposit to Account setting
@@ -43,10 +37,7 @@ module Effective
     end
 
     def items
-      with_authenticated_request do |access_token|
-        service = Quickbooks::Service::Item.new(company_id: realm.company_id, access_token: access_token)
-        service.all()
-      end
+      with_service('Item') { |service| service.all() }
     end
 
     def items_collection
@@ -59,19 +50,14 @@ module Effective
     def find_item(id: nil, name: nil)
       raise('expected either an id or name') unless id.present? || name.present?
 
-      with_authenticated_request do |access_token|
-        service = Quickbooks::Service::Item.new(company_id: realm.company_id, access_token: access_token)
-
+      with_service('Item') do |service|
         return service.find_by(:id, id) if id.present?
         return service.find_by(:name, name) if name.present?
       end
     end
 
     def payment_methods
-      with_authenticated_request do |access_token|
-        service = Quickbooks::Service::PaymentMethod.new(company_id: realm.company_id, access_token: access_token)
-        service.all()
-      end
+      with_service('PaymentMethod') { |service| service.all() }
     end
 
     def payment_methods_collection
@@ -85,9 +71,7 @@ module Effective
     def find_customer(user:)
       raise('expected a user that responds to email') unless user.respond_to?(:email)
 
-      with_authenticated_request do |access_token|
-        service = Quickbooks::Service::Customer.new(company_id: realm.company_id, access_token: access_token)
-
+      with_service('Customer') do |service|
         # Find by email
         customer = service.find_by(:PrimaryEmailAddr, user.email)&.first
         return customer if customer.present?
@@ -109,9 +93,7 @@ module Effective
     def create_customer(user:)
       raise('expected a user that responds to email') unless user.respond_to?(:email)
 
-      with_authenticated_request do |access_token|
-        service = Quickbooks::Service::Customer.new(company_id: realm.company_id, access_token: access_token)
-
+      with_service('Customer') do |service|
         customer = Quickbooks::Model::Customer.new(
           primary_email_address: Quickbooks::Model::EmailAddress.new(user.email),
         )
@@ -128,33 +110,24 @@ module Effective
     end
 
     def delete_customer(customer:)
-      with_authenticated_request do |access_token|
-        service = Quickbooks::Service::Customer.new(company_id: realm.company_id, access_token: access_token)
-        service.delete(customer)
-      end
+      with_service('Customer') { |service| service.delete(customer) }
     end
 
     def create_sales_receipt(sales_receipt:)
-      with_authenticated_request do |access_token|
-        service = Quickbooks::Service::SalesReceipt.new(company_id: realm.company_id, access_token: access_token)
-        service.create(sales_receipt)
-      end
+      with_service('SalesReceipt') { |service| service.create(sales_receipt) }
     end
 
     def find_sales_receipt(id:)
-      with_authenticated_request do |access_token|
-        service = Quickbooks::Service::SalesReceipt.new(company_id: realm.company_id, access_token: access_token)
-        service.find_by(:id, id)
-      end
+      with_service('SalesReceipt') { |service| service.find_by(:id, id) }
     end
 
     private
 
     def with_service(name, &block)
-      service = 'Quickbooks::Service::#{name}'.constantize
+      klass = "Quickbooks::Service::#{name}".constantize
 
       with_authenticated_request do |access_token|
-        service.new(company_id: realm.company_id, access_token: access_token)
+        service = klass.new(company_id: realm.company_id, access_token: access_token)
         yield(service)
       end
     end
