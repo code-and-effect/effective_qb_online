@@ -1,36 +1,7 @@
 %h1.effective-page-title= @page_title
 
-- if Rails.env.development?
-  = render 'credentials', api: @api
-
-= render 'company', api: @api
+= render('credentials', api: @api) if Rails.env.development?
+= render('company', api: @api)
 
 = card('Sales Receipts') do
-  - datatable = Admin::EffectiveQbReceiptsDatatable.new
-  = render_datatable(datatable)
-
-
--# = card('Customers') do
--#   %table.table.table-sm
--#     %tbody
--#       - @api.customers.each do |customer|
--#         %tr
--#           %td= customer.id
--#           %td= customer.display_name
--#           %td= customer.attributes[:billing_address]
-
--# = card('Invoices') do
--#   %table.table.table-sm
--#     %tbody
--#       %t
-
--#       - @api.invoices.each do |invoice|
--#         %tr
--#           %td= invoice.id
--#           %td= invoice.txn_date
--#           %td
--#             = invoice.customer_ref.name
--#             (#{invoice.customer_ref.value})
-
--#           %td= number_to_currency(invoice.total)
--#           %td= number_to_currency(invoice.txn_tax_detail.total_tax)
+  = render_datatable(Admin::EffectiveQbReceiptsDatatable.new)

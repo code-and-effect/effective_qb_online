@@ -18,6 +18,14 @@ module Effective
       "#{app_url}/salesreceipt?txnId=#{obj.try(:sales_receipt_id) || obj.try(:id) || obj}"
     end
 
+    # Singular
+    def company_info
+      with_authenticated_request do |access_token|
+        service = Quickbooks::Service::CompanyInfo.new(company_id: realm.company_id, access_token: access_token)
+        service.fetch_by_id(realm.company_id)
+      end
+    end
+
     def accounts
       with_authenticated_request do |access_token|
         service = Quickbooks::Service::Account.new(company_id: realm.company_id, access_token: access_token)
@@ -25,6 +33,7 @@ module Effective
       end
     end
 
+    # Only accounts we can use for the Deposit to Account setting
     def accounts_collection
       accounts
         .select { |account| ['Bank', 'Other Current Asset'].include?(account.account_type) }
@@ -47,53 +56,6 @@ module Effective
         .group_by(&:third)
     end
 
-    def payment_methods
-      with_authenticated_request do |access_token|
-        service = Quickbooks::Service::PaymentMethod.new(company_id: realm.company_id, access_token: access_token)
-        service.all()
-      end
-    end
-
-    def payment_methods_collection
-      payment_methods.sort_by(&:name).map { |payment_method| [payment_method.name, payment_method.id] }
-    end
-
-    # Singular
-    def company_info
-      with_authenticated_request do |access_token|
-        service = Quickbooks::Service::CompanyInfo.new(company_id: realm.company_id, access_token: access_token)
-        service.fetch_by_id(realm.company_id)
-      end
-    end
-
-    def customers
-      with_authenticated_request do |access_token|
-        service = Quickbooks::Service::Customer.new(company_id: realm.company_id, access_token: access_token)
-        service.all()
-      end
-    end
-
-    def customers_count
-      with_authenticated_request do |access_token|
-        service = Quickbooks::Service::Customer.new(company_id: realm.company_id, access_token: access_token)
-        service.query('SELECT COUNT(*) FROM Customer').total_count
-      end
-    end
-
-    def invoices
-      with_authenticated_request do |access_token|
-        service = Quickbooks::Service::Invoice.new(company_id: realm.company_id, access_token: access_token)
-        service.all()
-      end
-    end
-
-    def invoices_count
-      with_authenticated_request do |access_token|
-        service = Quickbooks::Service::Invoice.new(company_id: realm.company_id, access_token: access_token)
-        service.query('SELECT COUNT(*) FROM Invoice').total_count
-      end
-    end
-
     def find_item(id: nil, name: nil)
       raise('expected either an id or name') unless id.present? || name.present?
 
@@ -103,6 +65,17 @@ module Effective
         return service.find_by(:id, id) if id.present?
         return service.find_by(:name, name) if name.present?
       end
+    end
+
+    def payment_methods
+      with_authenticated_request do |access_token|
+        service = Quickbooks::Service::PaymentMethod.new(company_id: realm.company_id, access_token: access_token)
+        service.all()
+      end
+    end
+
+    def payment_methods_collection
+      payment_methods.sort_by(&:name).map { |payment_method| [payment_method.name, payment_method.id] }
     end
 
     def find_or_create_customer(user:)
@@ -168,7 +141,23 @@ module Effective
       end
     end
 
+    def find_sales_receipt(id:)
+      with_authenticated_request do |access_token|
+        service = Quickbooks::Service::SalesReceipt.new(company_id: realm.company_id, access_token: access_token)
+        service.find_by(:id, id)
+      end
+    end
+
     private
+
+    def with_service(name, &block)
+      service = 'Quickbooks::Service::#{name}'.constantize
+
+      with_authenticated_request do |access_token|
+        service.new(company_id: realm.company_id, access_token: access_token)
+        yield(service)
+      end
+    end
 
     def with_authenticated_request(max_attempts: 3, &block)
       raise('expected a block') unless block_given?

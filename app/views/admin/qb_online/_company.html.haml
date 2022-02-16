@@ -12,14 +12,6 @@
         %td= company_info.country
 
       %tr
-        %td Customers
-        %td= pluralize(api.customers_count, 'customer')
-
-      %tr
-        %td Invoices
-        %td= pluralize(api.invoices_count, 'invoice')
-
-      %tr
         %td OAuth2 Connection
         %td= link_to('Reconnect to Quickbooks Online', effective_qb_online.quickbooks_oauth_path)
 

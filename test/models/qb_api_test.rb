@@ -12,22 +12,6 @@ class QbApiTest < ActiveSupport::TestCase
     assert_equal 'US', company_info.country
   end
 
-  test 'can list customers' do
-    assert EffectiveQbOnline.api.customers.count > 0
-  end
-
-  test 'can list invoices' do
-    assert EffectiveQbOnline.api.invoices.count > 0
-  end
-
-  test 'can list customers count' do
-    assert EffectiveQbOnline.api.customers_count > 0
-  end
-
-  test 'can list invoices count' do
-    assert EffectiveQbOnline.api.invoices_count > 0
-  end
-
   test 'can crud customers' do
     now = Time.zone.now.to_i
 
