@@ -55,10 +55,30 @@ class QbSalesReceiptTest < ActiveSupport::TestCase
     assert_equal order.note_internal, sales_receipt.private_note
 
     # Deposit matches
-    assert_equal api.realm.deposit_to_account_id, sales_receipt.deposit_to_account.value
+    assert_equal api.realm.deposit_to_account_id, sales_receipt.deposit_to_account_ref.value
+    assert_equal 0.0, sales_receipt.balance
+
+    # Items match
+    taxes = api.taxes_collection
+    tax_code = taxes[order.tax_rate]
+    tax_exempt = taxes[0.0]
+
+    order.order_items.each do |order_item|
+      line = sales_receipt.line_items.find { |line| line.description == order_item.name }
+      assert(line.present?, 'missing sales item line for order item')
+
+      assert_equal (order_item.subtotal / 100.0).round(2), line.amount
+
+      if order_item.tax_exempt?
+        assert_equal line.sales_item_line_detail.tax_code_ref.value, tax_exempt.id
+      else
+        assert_equal line.sales_item_line_detail.tax_code_ref.value, tax_code.id
+      end
+    end
 
     # Totals match
-    assert_equal order.total, sales_receipt.total
+    assert_equal (order.total / 100.0).round(2), sales_receipt.total
+    assert_equal (order.tax / 100.0).round(2), sales_receipt.txn_tax_detail.total_tax
   end
 
 end

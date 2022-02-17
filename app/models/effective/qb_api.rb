@@ -128,8 +128,38 @@ module Effective
       with_service('SalesReceipt') { |service| service.find_by(:id, id) }
     end
 
-    def taxes
+    def tax_codes
       with_service('TaxCode') { |service| service.all }
+    end
+
+    def tax_rates
+      with_service('TaxRate') { |service| service.all }
+    end
+
+    # Returns a Hash of BigNumeral => TaxCode
+    def taxes_collection
+      rates = tax_rates()
+      codes = tax_codes()
+
+      # Find Exempt 0.0
+      exempt = codes.find do |code|
+        rate_id = code.sales_tax_rate_list.tax_rate_detail.first&.tax_rate_ref&.value
+        rate = rates.find { |rate| rate.id == rate_id } if rate_id
+
+        code.name.downcase.include?('exempt') && rate && rate.rate_value == 0.0
+      end
+
+      exempt = [[0.0, exempt]] if exempt.present?
+
+      # Find The rest
+      tax_codes = codes.map do |code|
+        rate_id = code.sales_tax_rate_list.tax_rate_detail.first&.tax_rate_ref&.value
+        rate = rates.find { |rate| rate.id == rate_id } if rate_id
+
+        [rate.rate_value, code] if rate && rate.rate_value > 0.0
+      end
+
+      (Array(exempt) + tax_codes.compact).to_h
     end
 
     private
