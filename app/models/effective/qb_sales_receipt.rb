@@ -24,6 +24,32 @@ module Effective
         receipt.update!(customer_id: customer.id)
       end
 
+      # Find and validate receipt items
+      items = api.items()
+
+      receipt.qb_receipt_items.each do |receipt_item|
+        # Match item by receipt item
+        item = items.find { |item| [item.id, item.name].include?(receipt_item.item_id) }
+
+        if item.present?
+          receipt_item.update!(item_id: item.id); next
+        end
+
+        # Match item by order_item purchasable
+        purchasable = receipt_item.order_item.purchasable
+        raise("expecting purchasable for order item #{receipt_item.order_item.id}") if purchasable.blank?
+
+        item = items.find do |item|
+          ([item.id, item.name] & [purchsable.try(:qb_item_id), purchasable.try(:qb_item_name)]).present?
+        end
+
+        if item.present?
+          receipt_item.update!(item_id: item.id); next
+        end
+
+      end
+
+
       # Receipt
       sales_receipt = Quickbooks::Model::SalesReceipt.new(
         customer_id: receipt.customer_id,
@@ -36,14 +62,14 @@ module Effective
         private_note: order.note_internal
       )
 
+      # Allows Quicbooks to auto-generate the transaction number
+      sales_receipt.auto_doc_number!
+
       # Addresses
       sales_receipt.bill_address = build_address(order.billing_address) if order.billing_address.present?
       sales_receipt.ship_address = build_address(order.shipping_address) if order.shipping_address.present?
 
-      # Allows Quicbooks to auto-generate the transaction number
-      sales_receipt.auto_doc_number!
-
-      # Add all the line items
+      # Line Items
       receipt.qb_receipt_items.each do |receipt_item|
         order_item = receipt_item.order_item
 
