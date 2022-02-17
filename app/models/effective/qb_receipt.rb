@@ -40,13 +40,7 @@ module Effective
       raise('expected an Effective::Order') unless order.kind_of?(Effective::Order)
 
       qb_receipt = Effective::QbReceipt.where(order: order).first_or_initialize
-
-      order.order_items.each do |order_item|
-        qb_receipt_item = qb_receipt.qb_receipt_item(order_item: order_item)
-
-        # Assign the item ID if we know it right away
-        qb_receipt_item.item_id ||= order_item.purchasable.try(:qb_item_id)
-      end
+      order.order_items.each { |order_item| qb_receipt.qb_receipt_item(order_item: order_item) }
 
       qb_receipt.save!
       qb_receipt
@@ -71,6 +65,11 @@ module Effective
         sales_receipt = Effective::QbSalesReceipt.build_from_receipt!(receipt: self, api: api)
         sales_receipt = api.create_sales_receipt(sales_receipt: sales_receipt)
 
+        # Sanity check
+        if (expected = api.price_to_amount(order.total)) != sales_receipt.total
+          raise("A Quickbooks Online Sales Receipt has been created with an unexpected total. Quickbooks total is #{sales_receipt.total} but we expected #{expected}. Please adjust the Sales Receipt on Quickbooks")
+        end
+
         assign_attributes(result: 'completed successfully', sales_receipt_id: sales_receipt.id)
         complete!
       rescue => e
@@ -79,6 +78,10 @@ module Effective
       end
 
       true
+    end
+
+    def skip!
+      skipped!
     end
 
     def complete!

@@ -71,8 +71,8 @@ module Effective
       sales_receipt.auto_doc_number!
 
       # Addresses
-      sales_receipt.bill_address = qb_address(order.billing_address) if order.billing_address.present?
-      sales_receipt.ship_address = qb_address(order.shipping_address) if order.shipping_address.present?
+      sales_receipt.bill_address = api.build_address(order.billing_address) if order.billing_address.present?
+      sales_receipt.ship_address = api.build_address(order.shipping_address) if order.shipping_address.present?
 
       # Line Items
       tax_code = taxes[order.tax_rate]
@@ -80,13 +80,13 @@ module Effective
 
       receipt.qb_receipt_items.each do |receipt_item|
         order_item = receipt_item.order_item
-        line_item = Quickbooks::Model::Line.new(amount: qb_price(order_item.subtotal), description: order_item.name)
+        line_item = Quickbooks::Model::Line.new(amount: api.price_to_amount(order_item.subtotal), description: order_item.name)
 
         line_item.sales_item! do |line|
           line.item_id = receipt_item.item_id
           line.tax_code_id = (order_item.tax_exempt? ? tax_exempt.id : tax_code.id)
 
-          line.unit_price = qb_price(order_item.price)
+          line.unit_price = api.price_to_amount(order_item.price)
           line.quantity = order_item.quantity
         end
 
@@ -98,27 +98,6 @@ module Effective
 
       # Return a Quickbooks::Model::SalesReceipt that is ready to create
       sales_receipt
-    end
-
-    private
-
-    def self.qb_price(price)
-      raise('Expected an Integer price') unless price.kind_of?(Integer)
-      (price / 100.0).round(2)
-    end
-
-    def self.qb_address(address)
-      raise('Expected a Effective::Address') unless address.kind_of?(Effective::Address)
-
-      Quickbooks::Model::PhysicalAddress.new(
-        line1: address.address1,
-        line2: address.address2,
-        line3: address.try(:address3),
-        city: address.city,
-        country: address.country,
-        country_sub_division_code: address.country_code,
-        postal_code: address.postal_code
-      )
     end
 
   end

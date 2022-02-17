@@ -4,16 +4,18 @@ module Effective
   class QbRealm < ActiveRecord::Base
 
     effective_resource do
+      # As per Quickbooks oAuth
       realm_id                    :string
-
-      deposit_to_account_id       :string
-      payment_method_id           :string
 
       access_token                :text
       access_token_expires_at     :datetime
 
       refresh_token               :text
       refresh_token_expires_at    :datetime
+
+      # Set on /admin/quickbooks
+      deposit_to_account_id       :string
+      payment_method_id           :string
 
       timestamps
     end
@@ -29,10 +31,6 @@ module Effective
 
     def to_s
       'Quickbooks Online Settings'
-    end
-
-    def company_id
-      realm_id
     end
 
   end

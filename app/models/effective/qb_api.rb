@@ -18,17 +18,32 @@ module Effective
       "#{app_url}/salesreceipt?txnId=#{obj.try(:sales_receipt_id) || obj.try(:id) || obj}"
     end
 
-    def customers_url
-      "#{app_url}/customers"
-    end
-
     def customer_url(obj)
       "#{app_url}/customerdetail?nameId=#{obj.try(:customer_id) || obj.try(:id) || obj}"
     end
 
+    def price_to_amount(price)
+      raise('Expected an Integer price') unless price.kind_of?(Integer)
+      (price / 100.0).round(2)
+    end
+
+    def build_address(address)
+      raise('Expected a Effective::Address') unless address.kind_of?(Effective::Address)
+
+      Quickbooks::Model::PhysicalAddress.new(
+        line1: address.address1,
+        line2: address.address2,
+        line3: address.try(:address3),
+        city: address.city,
+        country: address.country,
+        country_sub_division_code: address.country_code,
+        postal_code: address.postal_code
+      )
+    end
+
     # Singular
     def company_info
-      with_service('CompanyInfo') { |service| service.fetch_by_id(realm.company_id) }
+      with_service('CompanyInfo') { |service| service.fetch_by_id(realm.realm_id) }
     end
 
     def accounts
@@ -41,7 +56,7 @@ module Effective
         .select { |account| ['Bank', 'Other Current Asset'].include?(account.account_type) }
         .sort_by { |account| [account.account_type, account.name] }
         .map { |account| [account.name, account.id, account.account_type] }
-        .group_by(&:third)
+        .group_by(&:last)
     end
 
     def items
@@ -50,18 +65,10 @@ module Effective
 
     def items_collection
       items
+        .reject { |item| item.type == 'Category' }
         .sort_by { |item| [item.type, item.name] }
         .map { |item| [item.name, item.id, item.type] }
-        .group_by(&:third)
-    end
-
-    def find_item(id: nil, name: nil)
-      raise('expected either an id or name') unless id.present? || name.present?
-
-      with_service('Item') do |service|
-        return service.find_by(:id, id) if id.present?
-        return service.find_by(:name, name) if name.present?
-      end
+        .group_by(&:last)
     end
 
     def payment_methods
@@ -82,20 +89,15 @@ module Effective
       with_service('Customer') do |service|
         # Find by email
         customer = service.find_by(:PrimaryEmailAddr, user.email)&.first
-        return customer if customer.present?
 
         # Find by given name and family name
-        if user.respond_to?(:first_name) && user.respond_to?(:last_name)
-          customer = service.query("SELECT * FROM Customer WHERE GivenName LIKE '#{scrub(user.first_name)}' AND FamilyName LIKE '#{scrub(user.last_name)}'")&.first
-          return customer if customer.present?
+        customer ||= if user.respond_to?(:first_name) && user.respond_to?(:last_name)
+          service.query("SELECT * FROM Customer WHERE GivenName LIKE '#{scrub(user.first_name)}' AND FamilyName LIKE '#{scrub(user.last_name)}'")&.first
         end
 
         # Find by display name
-        customer = service.find_by(:display_name, scrub(user.to_s))&.first
-        return customer if customer.present?
+        customer || service.find_by(:display_name, scrub(user.to_s))&.first
       end
-
-      nil
     end
 
     def create_customer(user:)
@@ -104,13 +106,10 @@ module Effective
       with_service('Customer') do |service|
         customer = Quickbooks::Model::Customer.new(
           primary_email_address: Quickbooks::Model::EmailAddress.new(user.email),
-          display_name: scrub(user.to_s)
+          display_name: scrub(user.to_s),
+          given_name: scrub(user.try(:first_name)),
+          family_name: scrub(user.try(:last_name))
         )
-
-        if user.respond_to?(:first_name) && user.respond_to?(:last_name)
-          customer.given_name = scrub(user.first_name)
-          customer.family_name = scrub(user.last_name)
-        end
 
         service.create(customer)
       end
@@ -136,7 +135,8 @@ module Effective
       with_service('TaxRate') { |service| service.all }
     end
 
-    # Returns a Hash of BigNumeral => TaxCode
+    # Returns a Hash of BigNumeral Tax Rate => TaxCode Object
+    # { 0.0 => Quickbooks::Model::TaxCode }
     def taxes_collection
       rates = tax_rates()
       codes = tax_codes()
@@ -156,7 +156,7 @@ module Effective
         rate_id = code.sales_tax_rate_list.tax_rate_detail.first&.tax_rate_ref&.value
         rate = rates.find { |rate| rate.id == rate_id } if rate_id
 
-        [rate.rate_value, code] if rate && rate.rate_value > 0.0
+        [rate.rate_value, code] if rate && (exempt.blank? || rate.rate_value > 0.0)
       end
 
       (Array(exempt) + tax_codes.compact).to_h
@@ -168,14 +168,12 @@ module Effective
       klass = "Quickbooks::Service::#{name}".constantize
 
       with_authenticated_request do |access_token|
-        service = klass.new(company_id: realm.company_id, access_token: access_token)
+        service = klass.new(company_id: realm.realm_id, access_token: access_token)
         yield(service)
       end
     end
 
     def with_authenticated_request(max_attempts: 3, &block)
-      raise('expected a block') unless block_given?
-
       attempts = 0
 
       begin
@@ -202,6 +200,7 @@ module Effective
     end
 
     def scrub(value)
+      return nil unless value.present?
       value.gsub(':', '')
     end
 
