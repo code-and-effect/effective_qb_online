@@ -24,13 +24,21 @@ module Effective
         receipt.update!(customer_id: customer.id)
       end
 
+      # Receipt
       sales_receipt = Quickbooks::Model::SalesReceipt.new(
         customer_id: receipt.customer_id,
         txn_date: order.purchased_at.to_date,
         payment_ref_number: order.to_param,                       # Optional payment reference number/string
         deposit_to_account_id: api.realm.deposit_to_account_id,   # The ID of the Account Entity you want hte SalesReceipt to be deposited to
         payment_method_id: api.realm.payment_method_id,           # The ID of the PaymentMethod Entity
+        bill_email: Quickbooks::Model::EmailAddress.new(order.email),
+        customer_memo: order.note_to_buyer,
+        private_note: order.note_internal
       )
+
+      # Addresses
+      sales_receipt.bill_address = build_address(order.billing_address) if order.billing_address.present?
+      sales_receipt.ship_address = build_address(order.shipping_address) if order.shipping_address.present?
 
       # Allows Quicbooks to auto-generate the transaction number
       sales_receipt.auto_doc_number!
@@ -56,6 +64,22 @@ module Effective
       end
 
       sales_receipt
+    end
+
+    private
+
+    def self.build_address(address)
+      raise('Expected a Effective::Address') unless address.kind_of?(Effective::Address)
+
+      Quickbooks::Model::PhysicalAddress.new(
+        line1: address.address1,
+        line2: address.address2,
+        line3: address.try(:address3),
+        city: address.city,
+        country: address.country,
+        country_sub_division_code: address.country_code,
+        postal_code: address.postal_code
+      )
     end
 
   end
