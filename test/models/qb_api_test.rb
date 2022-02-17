@@ -8,8 +8,8 @@ class QbApiTest < ActiveSupport::TestCase
   test 'company info' do
     company_info = EffectiveQbOnline.api.company_info
 
-    assert_equal 'Effective Company', company_info.company_name
-    assert_equal 'US', company_info.country
+    assert_equal 'Sandbox Company_CA_2', company_info.company_name
+    assert_equal 'CA', company_info.country
   end
 
   test 'can crud customers' do

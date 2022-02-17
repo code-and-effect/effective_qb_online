@@ -27,7 +27,7 @@ module Effective
       token = EffectiveQbOnline.oauth2_client.auth_code.get_token(params[:code], redirect_uri: redirect_uri)
       return unless token
 
-      realm = Effective::QbRealm.where(realm_id: params[:realmId]).first_or_initialize
+      realm = Effective::QbRealm.all.first_or_initialize
 
       realm.update!(
         realm_id: params[:realmId],

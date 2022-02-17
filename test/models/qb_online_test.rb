@@ -10,6 +10,9 @@ class QbOnlineTest < ActiveSupport::TestCase
     order = create_effective_order!()
     assert order.valid?
 
+    assert order.billing_address.present?
+    assert order.shipping_address.present?
+
     assert_equal 2, order.order_items.length
 
     assert order.user.present?

@@ -86,12 +86,12 @@ module Effective
 
         # Find by given name and family name
         if user.respond_to?(:first_name) && user.respond_to?(:last_name)
-          customer = service.query("SELECT * FROM Customer WHERE GivenName LIKE '#{user.first_name}' AND FamilyName LIKE '#{user.last_name}'")&.first
+          customer = service.query("SELECT * FROM Customer WHERE GivenName LIKE '#{scrub(user.first_name)}' AND FamilyName LIKE '#{scrub(user.last_name)}'")&.first
           return customer if customer.present?
         end
 
         # Find by display name
-        customer = service.find_by(:display_name, user.to_s)&.first
+        customer = service.find_by(:display_name, scrub(user.to_s))&.first
         return customer if customer.present?
       end
 
@@ -104,12 +104,12 @@ module Effective
       with_service('Customer') do |service|
         customer = Quickbooks::Model::Customer.new(
           primary_email_address: Quickbooks::Model::EmailAddress.new(user.email),
-          display_name: user.to_s
+          display_name: scrub(user.to_s)
         )
 
         if user.respond_to?(:first_name) && user.respond_to?(:last_name)
-          customer.given_name = user.first_name
-          customer.family_name = user.last_name
+          customer.given_name = scrub(user.first_name)
+          customer.family_name = scrub(user.last_name)
         end
 
         service.create(customer)
@@ -126,6 +126,10 @@ module Effective
 
     def find_sales_receipt(id:)
       with_service('SalesReceipt') { |service| service.find_by(:id, id) }
+    end
+
+    def taxes
+      with_service('TaxCode') { |service| service.all }
     end
 
     private
@@ -165,6 +169,10 @@ module Effective
 
         retry
       end
+    end
+
+    def scrub(value)
+      value.gsub(':', '')
     end
 
   end
