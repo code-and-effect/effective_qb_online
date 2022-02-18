@@ -10,7 +10,7 @@ module Effective
     before_action { EffectiveResources.authorize!(self, :admin, :effective_qb_online) }
 
     def authorize
-      grant_url = EffectiveQbOnline.oauth2_client.auth_code.authorize_url(
+      grant_url = client.auth_code.authorize_url(
         redirect_uri: redirect_uri,
         response_type: 'code',
         state: SecureRandom.hex(12),
@@ -24,7 +24,7 @@ module Effective
     def callback
       return unless params[:code].present? && params[:realmId].present? && params[:state].present?
 
-      token = EffectiveQbOnline.oauth2_client.auth_code.get_token(params[:code], redirect_uri: redirect_uri)
+      token = client.auth_code.get_token(params[:code], redirect_uri: redirect_uri)
       return unless token
 
       realm = Effective::QbRealm.all.first_or_initialize
@@ -42,7 +42,31 @@ module Effective
       redirect_to(effective_qb_online.admin_quickbooks_path)
     end
 
+    def revoke
+      realm = EffectiveQbOnline.api.realm
+      return unless realm
+
+      # Instantiate the token
+      token = OAuth2::AccessToken.new(client, realm.access_token, refresh_token: realm.refresh_token)
+
+      # Revoke
+      response = token.post('/o/oauth2/revoke', params: { token: realm.refresh_token })
+
+      if response.status == 200
+        flash[:success] = 'Successfully revoked from Quickbooks Online'
+        realm.destroy!
+      else
+        flash[:danger] = 'Unable to revoke'
+      end
+
+      redirect_to(effective_qb_online.admin_quickbooks_path)
+    end
+
     private
+
+    def client
+      EffectiveQbOnline.oauth2_client
+    end
 
     def redirect_uri
       effective_qb_online.quickbooks_oauth_callback_url

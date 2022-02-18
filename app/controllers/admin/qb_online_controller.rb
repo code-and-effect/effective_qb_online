@@ -5,15 +5,9 @@ module Admin
 
     include Effective::CrudController
 
-    page_title 'Quickbooks Online'
-
     # /admin/quickbooks
     def index
-      @api = EffectiveQbOnline.api
-
-      authorize! :index, Effective::QbRealm
-
-      render(@api.present? ? 'index' : 'instructions')
+      @page_title = 'Quickbooks Online'
     end
 
   end

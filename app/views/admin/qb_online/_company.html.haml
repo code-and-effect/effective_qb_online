@@ -11,8 +11,9 @@
       %td= company_info.country
 
     %tr
-      %td OAuth2 Connection
-      %td= link_to('Reconnect to Quickbooks Online', effective_qb_online.quickbooks_oauth_path)
+      %td Quickbooks Online
+      %td
+        = link_to('Revoke Access and Disconnect', effective_qb_online.revoke_quickbooks_oauth_path, class: 'btn btn-sm btn-danger', 'data-method': 'delete', 'data-confirm': 'Really disconnect from Quickbooks Online?')
 
     %tr
       %td Deposit to Account

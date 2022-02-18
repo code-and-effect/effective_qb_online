@@ -1,0 +1,17 @@
+%p Welcome!
+%p Please click below to connect this website with your Quickbooks Online company.
+
+%p
+  = link_to(effective_qb_online.quickbooks_oauth_path) do
+    = image_tag('effective_qb_online/C2QB_green_btn_med_default.svg')
+
+%p
+  If it's not connecting, make sure the
+  Quickbooks Application has the correct Redirect URI.
+
+%ul
+  %li The url is: #{effective_qb_online.quickbooks_oauth_callback_url}
+
+%p
+  Once connected, a Quickbooks Online Sales Receipt
+  will be created when an order is purchased.

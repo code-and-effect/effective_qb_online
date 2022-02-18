@@ -1,14 +1,21 @@
 %h1.effective-admin-heading= @page_title
 
-- if Rails.env.development?
-  = card('Test Credentials') do
-    = render('test_credentials', api: @api)
+- api = EffectiveQbOnline.api
 
-= card('Company') do
-  = render('company', api: @api)
+- if api.blank?
+  = card('Connect to Quickbooks Online') do
+    = render('connect')
 
-= card('Sales Receipts') do
-  .text-right.mb-2
-    = link_to 'New Sales Receipt', effective_qb_online.new_admin_qb_receipt_path, class: 'btn btn-primary btn-sm'
+- if api.present?
+  - if Rails.env.development?
+    = card('Test Credentials') do
+      = render('test_credentials', api: api)
 
-  = render_datatable(Admin::EffectiveQbReceiptsDatatable.new)
+  = card('Company') do
+    = render('company', api: api)
+
+  = card('Sales Receipts') do
+    .text-right.mb-2
+      = link_to 'New Sales Receipt', effective_qb_online.new_admin_qb_receipt_path, class: 'btn btn-primary btn-sm'
+
+    = render_datatable(Admin::EffectiveQbReceiptsDatatable.new)

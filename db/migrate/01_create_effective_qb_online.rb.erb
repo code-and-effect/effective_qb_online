@@ -27,6 +27,8 @@ class CreateEffectiveQbOnline < ActiveRecord::Migration[6.1]
       t.timestamps
     end
 
+    add_index <%= @qb_receipts_table_name %>, :order_id
+
     create_table <%= @qb_receipt_items_name %> do |t|
       t.integer :qb_receipt_id
       t.integer :order_item_id

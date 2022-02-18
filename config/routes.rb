@@ -9,6 +9,7 @@ EffectiveQbOnline::Engine.routes.draw do
   scope module: 'effective' do
     get '/quickbooks/oauth/authorize', to: 'qb_oauth#authorize', as: :quickbooks_oauth
     get '/quickbooks/oauth/callback', to: 'qb_oauth#callback', as: :quickbooks_oauth_callback
+    delete '/quickbooks/oauth/revoke', to: 'qb_oauth#revoke', as: :revoke_quickbooks_oauth
   end
 
   namespace :admin do

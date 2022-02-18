@@ -7,6 +7,10 @@ module EffectiveQbOnline
       eval File.read("#{config.root}/config/effective_qb_online.rb")
     end
 
+    initializer 'effective_qb_online.assets' do |app|
+      app.config.assets.precompile += ['effective_qb_online_manifest.js', 'effective_qb_online/*']
+    end
+
     # Include acts_as_addressable concern and allow any ActiveRecord object to call it
     initializer 'effective_qb_online.active_record' do |app|
       ActiveSupport.on_load :active_record do
