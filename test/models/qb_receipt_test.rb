@@ -4,6 +4,9 @@ class QbReceiptTest < ActiveSupport::TestCase
 
   test 'can create an receipt from order' do
     order = create_effective_order!()
+    order.purchase!
+
+    Effective::QbReceipt.delete_all
 
     receipt = Effective::QbReceipt.create_from_order!(order)
     assert receipt.valid?

@@ -31,14 +31,7 @@ module EffectiveQbOnline
     Effective::QbApi.new(realm: realm)
   end
 
-  def self.skip_order!(order)
-    raise 'expected an instance of Effective::Order' unless order.kind_of?(Effective::Order)
-
-    qb_receipt = Effective::QbReceipt.create_from_order!(order)
-    qb_receipt.skip!
-  end
-
-  def self.sync_order!(order, perform_now: true)
+  def self.sync_order!(order, perform_now: false)
     raise 'expected a purchased Effective::Order' unless order.kind_of?(Effective::Order) && order.purchased?
 
     if perform_now
@@ -49,6 +42,13 @@ module EffectiveQbOnline
     end
 
     true
+  end
+
+  def self.skip_order!(order)
+    raise 'expected a purchased Effective::Order' unless order.kind_of?(Effective::Order) && order.purchased?
+
+    qb_receipt = Effective::QbReceipt.create_from_order!(order)
+    qb_receipt.skip!
   end
 
 end

@@ -1,7 +1,11 @@
-%h1.effective-page-title= @page_title
+%h1.effective-admin-heading= @page_title
 
-= render('credentials', api: @api) if Rails.env.development?
-= render('company', api: @api)
+- if Rails.env.development?
+  = card('Test Credentials') do
+    = render('test_credentials', api: @api)
+
+= card('Company') do
+  = render('company', api: @api)
 
 = card('Sales Receipts') do
   = render_datatable(Admin::EffectiveQbReceiptsDatatable.new)

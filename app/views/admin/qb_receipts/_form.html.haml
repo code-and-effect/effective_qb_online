@@ -1,18 +1,23 @@
-- items_collection = EffectiveQbOnline.api.items_collection
-
 = effective_form_with(model: [:admin, qb_receipt], engine: true) do |f|
-  = f.static_field :customer_id
+  = f.static_field :order
 
   %table.table.table-sm
     %thead
       %tr
+        %th Id
         %th Order Item
-        %th Quickbooks Item
+        %th Incorrect Item Name
+        %th Correct Quickbooks Online Item
 
     %tbody
+      - items_collection = EffectiveQbOnline.api.items_collection
+
       = f.fields_for :qb_receipt_items do |fi|
         %tr
+          %td= fi.object.order_item_id
           %td= fi.object.order_item
+          %td= fi.object.order_item_qb_name || '-'
+
           %td= fi.select :item_id, items_collection, grouped: true, label: false
 
   = f.submit 'Save and Sync'

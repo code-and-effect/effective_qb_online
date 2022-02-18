@@ -151,7 +151,7 @@ GEM
     effective_developer (0.6.8)
       effective_resources
       rails (>= 3.2.0)
-    effective_resources (1.9.7)
+    effective_resources (1.12.3)
       rails (>= 4.0.0)
     effective_test_bot (1.2.9)
       capybara (>= 2.15)

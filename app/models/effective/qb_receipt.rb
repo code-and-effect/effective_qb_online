@@ -37,7 +37,7 @@ module Effective
 
     # Create a QbReceipt from an Effective::Order
     def self.create_from_order!(order)
-      raise('expected an Effective::Order') unless order.kind_of?(Effective::Order)
+      raise('expected a purchased Effective::Order') unless order.kind_of?(Effective::Order) && order.purchased?
 
       qb_receipt = Effective::QbReceipt.where(order: order).first_or_initialize
       order.order_items.each { |order_item| qb_receipt.qb_receipt_item(order_item: order_item) }
@@ -57,8 +57,7 @@ module Effective
     end
 
     def sync!(force: false)
-      raise('has already been synchronized with Quickbooks Online') if sales_receipt_id.present? && !force
-
+      raise('already created SalesReceipt with Quickbooks Online') if sales_receipt_id.present? && !force
       save!
 
       api = EffectiveQbOnline.api
@@ -80,10 +79,6 @@ module Effective
       end
 
       true
-    end
-
-    def void!
-      raise('must have a sales receipt ID to void') if sales_receipt_id.blank?
     end
 
     def skip!
