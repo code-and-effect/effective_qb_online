@@ -8,9 +8,6 @@ module Effective
       api ||= EffectiveQbOnline.api
       raise('Expected a connected Quickbooks API') unless api.present?
 
-      company_info = api.company_info
-      raise('Expected a Canadian CA Quickbooks Company') unless company_info.country == 'CA'
-
       order = receipt.order
       raise('Expected a purchased Effective::Order') unless order.purchased?
 

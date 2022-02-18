@@ -7,6 +7,7 @@ require 'effective_qb_online/version'
 module EffectiveQbOnline
   def self.config_keys
     [
+      :qb_realms_table_name, :qb_receipts_table_name, :qb_receipt_items_table_name,
       :oauth_client_id, :oauth_client_secret,
       :layout
     ]

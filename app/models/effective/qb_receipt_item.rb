@@ -6,7 +6,8 @@ module Effective
     log_changes(to: :qb_receipt) if respond_to?(:log_changes)
 
     effective_resource do
-      item_id       :string    # Will be blank when first created
+      # Will be blank when first created. Populated by QbSalesReceipt.build_from_receipt!
+      item_id       :string
 
       timestamps
     end

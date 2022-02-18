@@ -1,6 +1,6 @@
 # Effective Quickbooks Online
 
-Synchronize your Effective Orders with Quickbooks Online.
+Create Quickbooks Online SalesReceipts for purchased effective orders.
 
 ## Getting Started
 
@@ -39,60 +39,48 @@ Then migrate the database:
 rake db:migrate
 ```
 
-Please add the following to your User model:
-
-```
-```
-
-and
-
 ```
 Add a link to the admin menu:
 
 ```haml
 - if can? :admin, :effective_qb_online
-  - if can? :index, Effective::QbOnline
-    = nav_link_to 'QbOnline', effective_qb_online.admin_qb_onlines_path
+  = nav_link_to 'Quickbooks Online', effective_qb_online.admin_quickbooks_path
 ```
 
-## Configuration
+and visit `/admin/quickbooks`.
 
 ## Authorization
 
 All authorization checks are handled via the effective_resources gem found in the `config/initializers/effective_resources.rb` file.
-
-## Effective Roles
-
-This gem works with effective roles for the representative roles.
-
-Configure your `config/initializers/effective_roles.rb` something like this:
-
-```
-```
 
 ## Permissions
 
 The permissions you actually want to define are as follows (using CanCan):
 
 ```ruby
-if user.persisted?
-end
-
 if user.admin?
   can :admin, :effective_qb_online
+
+  can(crud, Effective::QbRealm)
+  can(crud + [:skip, :sync], Effective::QbReceipt) { |receipt| !receipt.completed? }
 end
 ```
 
 ## Configuring Quickbooks Company
 
+This gem has only been tested with a Canadian Quickbooks Online store.
+
+It has GST, HST and Tax Exempt tax codes and rates set up ahead of time by Quickbooks.
 
 ## License
 
-MIT License.  Copyright [Code and Effect Inc.](http://www.codeandeffect.com/)
+MIT License. Copyright [Code and Effect Inc.](http://www.codeandeffect.com/)
 
 ## Testing
 
-Run tests by:
+There are tests, but the access token and refresh token doesn't work well.
+
+You must visit /admin/quickbooks and copy & paste the test credentials into ~/.env
 
 ```ruby
 rails test

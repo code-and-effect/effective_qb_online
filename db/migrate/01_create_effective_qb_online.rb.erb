@@ -1,6 +1,6 @@
 class CreateEffectiveQbOnline < ActiveRecord::Migration[6.1]
   def change
-    create_table :qb_realms do |t|
+    create_table <%= @qb_realms_table_name %> do |t|
       t.string :realm_id
 
       t.integer :deposit_to_account_id
@@ -15,7 +15,7 @@ class CreateEffectiveQbOnline < ActiveRecord::Migration[6.1]
       t.timestamps
     end
 
-    create_table :qb_receipts do |t|
+    create_table <%= @qb_receipts_table_name %> do |t|
       t.integer :order_id
       t.integer :customer_id
 
@@ -27,7 +27,7 @@ class CreateEffectiveQbOnline < ActiveRecord::Migration[6.1]
       t.timestamps
     end
 
-    create_table :qb_receipt_items do |t|
+    create_table <%= @qb_receipt_items_name %> do |t|
       t.integer :qb_receipt_id
       t.integer :order_item_id
 

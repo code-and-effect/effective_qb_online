@@ -1,16 +1,4 @@
 PATH
-  remote: ../effective_orders
-  specs:
-    effective_orders (5.2.17)
-      coffee-rails
-      effective_addresses
-      effective_bootstrap
-      effective_datatables
-      effective_resources
-      rails (>= 4.0.0)
-      sassc
-
-PATH
   remote: .
   specs:
     effective_qb_online (0.0.1)
@@ -151,6 +139,14 @@ GEM
     effective_developer (0.6.8)
       effective_resources
       rails (>= 3.2.0)
+    effective_orders (5.3.0)
+      coffee-rails
+      effective_addresses
+      effective_bootstrap
+      effective_datatables
+      effective_resources
+      rails (>= 4.0.0)
+      sassc
     effective_resources (1.12.3)
       rails (>= 4.0.0)
     effective_test_bot (1.2.9)
@@ -358,7 +354,6 @@ DEPENDENCIES
   devise
   dotenv-rails
   effective_developer
-  effective_orders!
   effective_qb_online!
   effective_test_bot
   haml-rails
