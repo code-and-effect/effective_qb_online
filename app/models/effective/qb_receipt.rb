@@ -56,13 +56,15 @@ module Effective
       qb_receipt_items.build(order_item: order_item)
     end
 
-    def sync!
+    def sync!(force: false)
+      raise('has already been synchronized with Quickbooks Online') if sales_receipt_id.present? && !force
+
       save!
 
       api = EffectiveQbOnline.api
 
       begin
-        sales_receipt = Effective::QbSalesReceipt.build_from_receipt!(receipt: self, api: api)
+        sales_receipt = Effective::QbSalesReceipt.build_from_receipt!(self, api: api)
         sales_receipt = api.create_sales_receipt(sales_receipt: sales_receipt)
 
         # Sanity check
@@ -80,7 +82,12 @@ module Effective
       true
     end
 
+    def void!
+      raise('must have a sales receipt ID to void') if sales_receipt_id.blank?
+    end
+
     def skip!
+      assign_attributes(result: 'skipped')
       skipped!
     end
 

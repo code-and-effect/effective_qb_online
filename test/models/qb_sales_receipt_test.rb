@@ -5,7 +5,7 @@ class QbSalesReceiptTest < ActiveSupport::TestCase
   test 'can sync a sales receipt from receipt' do
     order = create_effective_order!()
     order.update!(note_to_buyer: 'Note to Buyer', note_internal: 'Note Internal')
-    order.purchase!
+    order.mark_as_purchased!
 
     api = EffectiveQbOnline.api
     receipt = Effective::QbReceipt.create_from_order!(order)

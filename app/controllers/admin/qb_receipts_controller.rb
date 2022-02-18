@@ -5,5 +5,7 @@ module Admin
 
     include Effective::CrudController
 
+    submit :sync, 'Save and Sync', redirect: -> { effective_qb_online.admin_quickbooks_path }
+
   end
 end

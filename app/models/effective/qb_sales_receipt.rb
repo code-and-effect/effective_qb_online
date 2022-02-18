@@ -42,7 +42,7 @@ module Effective
         end
 
         if item.blank?
-          raise("unknown Quickbooks Item for #{purchasable} (#{purchasable.class.name} ##{purchasable.id} qb_item_id=#{purchasable.try(:qb_item_id) || 'blank'} qb_item_name=#{purchasable.try(:qb_item_name) || 'blank'})")
+          raise("unknown Quickbooks Item for #{purchasable} (#{purchasable.class.name} ##{purchasable.id})")
         end
 
         receipt_item.update!(item_id: item.id)
