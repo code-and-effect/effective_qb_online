@@ -8,4 +8,7 @@
   = render('company', api: @api)
 
 = card('Sales Receipts') do
+  .text-right.mb-2
+    = link_to 'New Sales Receipt', effective_qb_online.new_admin_qb_receipt_path, class: 'btn btn-primary btn-sm'
+
   = render_datatable(Admin::EffectiveQbReceiptsDatatable.new)

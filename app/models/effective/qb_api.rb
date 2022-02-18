@@ -149,14 +149,14 @@ module Effective
         code.name.downcase.include?('exempt') && rate && rate.rate_value == 0.0
       end
 
-      exempt = [[0.0, exempt]] if exempt.present?
+      exempt = [['0.0', exempt]] if exempt.present?
 
       # Find The rest
       tax_codes = codes.map do |code|
         rate_id = code.sales_tax_rate_list.tax_rate_detail.first&.tax_rate_ref&.value
         rate = rates.find { |rate| rate.id == rate_id } if rate_id
 
-        [rate.rate_value, code] if rate && (exempt.blank? || rate.rate_value > 0.0)
+        [rate.rate_value.to_s, code] if rate && (exempt.blank? || rate.rate_value > 0.0)
       end
 
       (Array(exempt) + tax_codes.compact).to_h

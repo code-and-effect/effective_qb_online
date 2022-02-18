@@ -28,6 +28,11 @@ module Effective
 
     scope :deep, -> { includes(order: :user, qb_receipt_items: [order_item: :purchasable]) }
 
+    # Create a QbReceiptItem for each OrderItem
+    before_validation(if: -> { order.present? }) do
+      order.order_items.each { |order_item| qb_receipt_item(order_item: order_item) }
+    end
+
     validates :qb_receipt_items, presence: true
 
     with_options(if: -> { completed? }) do
@@ -37,13 +42,8 @@ module Effective
 
     # Create a QbReceipt from an Effective::Order
     def self.create_from_order!(order)
-      raise('expected a purchased Effective::Order') unless order.kind_of?(Effective::Order) && order.purchased?
-
-      qb_receipt = Effective::QbReceipt.where(order: order).first_or_initialize
-      order.order_items.each { |order_item| qb_receipt.qb_receipt_item(order_item: order_item) }
-
-      qb_receipt.save!
-      qb_receipt
+      raise('Expected a purchased Effective::Order') unless order.kind_of?(Effective::Order) && order.purchased?
+      Effective::QbReceipt.where(order: order).first_or_create
     end
 
     def to_s
@@ -57,7 +57,7 @@ module Effective
     end
 
     def sync!(force: false)
-      raise('already created SalesReceipt with Quickbooks Online') if sales_receipt_id.present? && !force
+      raise('Already created SalesReceipt with Quickbooks Online') if sales_receipt_id.present? && !force
       save!
 
       api = EffectiveQbOnline.api

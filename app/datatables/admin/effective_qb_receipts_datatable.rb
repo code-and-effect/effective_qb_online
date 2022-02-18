@@ -7,7 +7,7 @@ module Admin
       col :created_at, visible: false
       col :id, visible: false
 
-      col :created_at
+      col :updated_at
 
       col :order, search: :string
 

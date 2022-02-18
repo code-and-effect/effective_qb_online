@@ -1,23 +1,40 @@
 = effective_form_with(model: [:admin, qb_receipt], engine: true) do |f|
-  = f.static_field :order
 
-  %table.table.table-sm
-    %thead
-      %tr
-        %th Id
-        %th Order Item
-        %th Incorrect Item Name
-        %th Correct Quickbooks Online Item
+  - if f.object.new_record?
+    = f.select :order_id, qb_receipt_effective_orders_collection(f.object), required: true,
+      label: 'Unsynchronized purchased order',
+      hint: "If you don't see your purchased order in the list, it already has an existing sales receipt."
 
-    %tbody
-      - items_collection = EffectiveQbOnline.api.items_collection
+  - if f.object.persisted?
+    = f.static_field :order
 
-      = f.fields_for :qb_receipt_items do |fi|
+    = f.static_field :updated_at
+
+    = f.static_field :status
+    = f.static_field :result, label: 'Quickbooks Online Result'
+
+    %table.table.table-sm
+      %thead
         %tr
-          %td= fi.object.order_item_id
-          %td= fi.object.order_item
-          %td= fi.object.order_item_qb_name || '-'
+          %th Id
+          %th Order Item
+          %th Existing Name
+          %th Quickbooks Online Item
 
-          %td= fi.select :item_id, items_collection, grouped: true, label: false
+      %tbody
+        - items_collection = EffectiveQbOnline.api.items_collection
+        - items = items_collection.flatten(2)
+
+        = f.fields_for :qb_receipt_items do |fi|
+          %tr
+            %td= fi.object.order_item_id
+            %td= fi.object.order_item
+            %td
+              - if fi.object.item_id.present?
+                - existing = items.find { |(name, id)| id == fi.object.item_id }&.first
+
+              = existing || fi.object.order_item_qb_name || '-'
+
+            %td= fi.select :item_id, items_collection, grouped: true, label: false
 
   = f.submit 'Save and Sync'

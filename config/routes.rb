@@ -14,7 +14,7 @@ EffectiveQbOnline::Engine.routes.draw do
   namespace :admin do
     resources :qb_realms, only: [:edit, :update]
 
-    resources :qb_receipts, only: [:edit, :update] do
+    resources :qb_receipts, except: [:show, :destroy] do
       post :skip, on: :member
       post :sync, on: :member
     end

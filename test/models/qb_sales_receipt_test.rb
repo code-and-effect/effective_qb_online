@@ -60,8 +60,8 @@ class QbSalesReceiptTest < ActiveSupport::TestCase
 
     # Items match
     taxes = api.taxes_collection
-    tax_code = taxes[order.tax_rate]
-    tax_exempt = taxes[0.0]
+    tax_code = taxes[order.tax_rate.to_s]
+    tax_exempt = taxes['0.0']
 
     order.order_items.each do |order_item|
       line = sales_receipt.line_items.find { |line| line.description == order_item.name }

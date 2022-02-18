@@ -5,10 +5,13 @@ module Admin
 
     include Effective::CrudController
 
-    on :save, redirect: -> { effective_qb_online.admin_quickbooks_path }
     on :skip, redirect: -> { effective_qb_online.admin_quickbooks_path }
-    on :sync, redirect: -> { effective_qb_online.admin_quickbooks_path }
+
+    on :sync, redirect: -> {
+      resource.completed? ?  effective_qb_online.admin_quickbooks_path : :edit
+    }
 
     submit :sync, 'Save and Sync'
+
   end
 end

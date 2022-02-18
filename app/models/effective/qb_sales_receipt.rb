@@ -3,34 +3,34 @@ module Effective
 
     # Build the Quickbooks SalesReceipt from a QbReceipt
     def self.build_from_receipt!(receipt, api: nil)
-      raise('expected a persisted Effective::QbReceipt') unless receipt.kind_of?(Effective::QbReceipt) && receipt.persisted?
+      raise('Expected a persisted Effective::QbReceipt') unless receipt.kind_of?(Effective::QbReceipt) && receipt.persisted?
 
       api ||= EffectiveQbOnline.api
-      raise('expected a connected Quickbooks API') unless api.present?
+      raise('Expected a connected Quickbooks API') unless api.present?
 
       company_info = api.company_info
-      raise('expected a Canadian CA Quickbooks Company') unless company_info.country == 'CA'
+      raise('Expected a Canadian CA Quickbooks Company') unless company_info.country == 'CA'
 
       order = receipt.order
-      raise('expected a purchased Effective::Order') unless order.purchased?
+      raise('Expected a purchased Effective::Order') unless order.purchased?
 
       user = order.user
-      raise('expected a user with an email') unless user.respond_to?(:email)
+      raise('Expected a user with an email') unless user.respond_to?(:email)
 
       realm = api.realm
-      raise('missing Deposit to Account') unless realm.deposit_to_account_id.present?
-      raise('missing Payment Method') unless realm.payment_method_id.present?
+      raise('Missing Deposit to Account') unless realm.deposit_to_account_id.present?
+      raise('Missing Payment Method') unless realm.payment_method_id.present?
 
       taxes = api.taxes_collection
-      raise("missing Tax Code for tax rate #{order.tax_rate.presence || 'blank'}") unless taxes[order.tax_rate].present?
-      raise("missing Tax Code for tax exempt 0.0 rate") unless taxes[0.0].present?
+      raise("Missing Tax Code for tax rate #{order.tax_rate.presence || 'blank'}") unless taxes[order.tax_rate.to_s].present?
+      raise("Missing Tax Code for tax exempt 0.0 rate") unless taxes['0.0'].present?
 
       # Find and validate items
       items = api.items()
 
       receipt.qb_receipt_items.each do |receipt_item|
         purchasable = receipt_item.order_item.purchasable
-        raise("expected a purchasable for Effective::OrderItem #{receipt_item.order_item.id}") unless purchasable.present?
+        raise("Expected a purchasable for Effective::OrderItem #{receipt_item.order_item.id}") unless purchasable.present?
 
         # Find item by receipt item
         item = items.find { |item| [item.id, item.name].include?(receipt_item.item_id) }
@@ -42,7 +42,7 @@ module Effective
         end
 
         if item.blank?
-          raise("unknown Quickbooks Item for #{purchasable} (#{purchasable.class.name} ##{purchasable.id})")
+          raise("Unknown Quickbooks Item for #{purchasable} (#{purchasable.class.name} ##{purchasable.id})")
         end
 
         receipt_item.update!(item_id: item.id)
@@ -75,8 +75,8 @@ module Effective
       sales_receipt.ship_address = api.build_address(order.shipping_address) if order.shipping_address.present?
 
       # Line Items
-      tax_code = taxes[order.tax_rate]
-      tax_exempt = taxes[0.0]
+      tax_code = taxes[order.tax_rate.to_s]
+      tax_exempt = taxes['0.0']
 
       receipt.qb_receipt_items.each do |receipt_item|
         order_item = receipt_item.order_item
@@ -94,7 +94,7 @@ module Effective
       end
 
       # Double check
-      raise("invalid SalesReceipt generated for Effective::Order #{order.id}") unless sales_receipt.valid?
+      raise("Invalid SalesReceipt generated for Effective::Order #{order.id}") unless sales_receipt.valid?
 
       # Return a Quickbooks::Model::SalesReceipt that is ready to create
       sales_receipt
