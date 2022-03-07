@@ -10,8 +10,8 @@ Gem::Specification.new do |spec|
   spec.authors     = ['Code and Effect']
   spec.email       = ['info@codeandeffect.com']
   spec.homepage    = 'https://github.com/code-and-effect/effective_qb_online'
-  spec.summary     = 'Create Quickbooks Online SalesReceipts for purchased effective orders'
-  spec.description = 'Create Quickbooks Online SalesReceipts for purchased effective orders'
+  spec.summary     = 'Create QuickBooks Online SalesReceipts for purchased effective orders'
+  spec.description = 'Create QuickBooks Online SalesReceipts for purchased effective orders'
   spec.license     = 'MIT'
 
   spec.files = Dir["{app,config,db,lib}/**/*"] + ['MIT-LICENSE', 'Rakefile', 'README.md']

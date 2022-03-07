@@ -1,4 +1,4 @@
-# The Quickbooks namespace comes from quickbooks-ruby gem
+# The QuickBooks namespace comes from quickbooks-ruby gem
 # https://github.com/ruckus/quickbooks-ruby
 
 module Effective
@@ -180,10 +180,10 @@ module Effective
         token = OAuth2::AccessToken.new(EffectiveQbOnline.oauth2_client, realm.access_token, refresh_token: realm.refresh_token)
         yield(token)
       rescue OAuth2::Error, Quickbooks::AuthorizationFailure => e
-        puts "Quickbooks OAuth Error: #{e.message}"
+        puts "QuickBooks OAuth Error: #{e.message}"
 
         attempts += 1
-        raise "unable to refresh Quickbooks OAuth2 token" if attempts >= max_attempts
+        raise "unable to refresh QuickBooks OAuth2 token" if attempts >= max_attempts
 
         # Refresh
         refreshed = token.refresh!
