@@ -4,7 +4,7 @@ module Effective
   class QbOauthController < ApplicationController
     before_action(:authenticate_user!) if defined?(Devise)
 
-    # Any user that has priviledges with the Quickbooks Online company could authenticate
+    # Any user that has priviledges with the QuickBooks Online company could authenticate
     # But we assume this user also has admin priviledges on our site
     # This should only be done once anyway
     before_action { EffectiveResources.authorize!(self, :admin, :effective_qb_online) }
@@ -20,7 +20,7 @@ module Effective
       redirect_to(grant_url)
     end
 
-    # This matches the Quickbooks Redirect URI and we have to set it up ahead of time.
+    # This matches the QuickBooks Redirect URI and we have to set it up ahead of time.
     def callback
       return unless params[:code].present? && params[:realmId].present? && params[:state].present?
 
@@ -37,7 +37,7 @@ module Effective
         refresh_token_expires_at: (Time.at(token.expires_at) + 100.days)
       )
 
-      flash[:success] = 'Successfully connected with Quickbooks Online'
+      flash[:success] = 'Successfully connected with QuickBooks Online'
 
       redirect_to(effective_qb_online.admin_quickbooks_path)
     end
@@ -53,7 +53,7 @@ module Effective
       response = token.post('/o/oauth2/revoke', params: { token: realm.refresh_token })
 
       if response.status == 200
-        flash[:success] = 'Successfully revoked from Quickbooks Online'
+        flash[:success] = 'Successfully revoked from QuickBooks Online'
         realm.destroy!
       else
         flash[:danger] = 'Unable to revoke'

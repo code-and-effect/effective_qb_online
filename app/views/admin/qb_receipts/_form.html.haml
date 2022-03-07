@@ -11,7 +11,7 @@
     = f.static_field :updated_at
 
     = f.static_field :status
-    = f.static_field :result, label: 'Quickbooks Online Result'
+    = f.static_field :result, label: 'QuickBooks Online Result'
 
     %table.table.table-sm
       %thead
@@ -19,7 +19,7 @@
           %th Id
           %th Order Item
           %th Existing Name
-          %th Quickbooks Online Item
+          %th QuickBooks Online Item
 
       %tbody
         - items_collection = EffectiveQbOnline.api.items_collection

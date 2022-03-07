@@ -1,6 +1,6 @@
 puts "Running effective_qb_online test seeds"
 
-# This has to match a real Quickbooks Online realm
+# This has to match a real QuickBooks Online realm
 realm = Effective::QbRealm.first_or_initialize
 
 realm.update!(

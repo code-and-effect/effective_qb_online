@@ -1,12 +1,12 @@
 module Effective
   class QbSalesReceipt
 
-    # Build the Quickbooks SalesReceipt from a QbReceipt
+    # Build the QuickBooks SalesReceipt from a QbReceipt
     def self.build_from_receipt!(receipt, api: nil)
       raise('Expected a persisted Effective::QbReceipt') unless receipt.kind_of?(Effective::QbReceipt) && receipt.persisted?
 
       api ||= EffectiveQbOnline.api
-      raise('Expected a connected Quickbooks API') unless api.present?
+      raise('Expected a connected QuickBooks API') unless api.present?
 
       order = receipt.order
       raise('Expected a purchased Effective::Order') unless order.purchased?
@@ -39,7 +39,7 @@ module Effective
         end
 
         if item.blank?
-          raise("Unknown Quickbooks Item for #{purchasable} (#{purchasable.class.name} ##{purchasable.id})")
+          raise("Unknown QuickBooks Item for #{purchasable} (#{purchasable.class.name} ##{purchasable.id})")
         end
 
         receipt_item.update!(item_id: item.id)
@@ -64,7 +64,7 @@ module Effective
         email_status: 'EmailSent'
       )
 
-      # Allows Quickbooks to auto-generate the transaction number
+      # Allows QuickBooks to auto-generate the transaction number
       sales_receipt.auto_doc_number!
 
       # Addresses

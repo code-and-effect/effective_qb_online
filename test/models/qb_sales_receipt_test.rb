@@ -21,7 +21,7 @@ class QbSalesReceiptTest < ActiveSupport::TestCase
     assert sales_receipt.valid?
     assert receipt.qb_receipt_items.all? { |receipt_item| receipt_item.item_id.present? }
 
-    # Actually create it with Quickbooks
+    # Actually create it with QuickBooks
     sales_receipt = api.create_sales_receipt(sales_receipt: sales_receipt)
     puts "Created: #{api.sales_receipt_url(sales_receipt)}"
 

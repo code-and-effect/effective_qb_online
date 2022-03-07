@@ -1,6 +1,6 @@
-# Effective Quickbooks Online
+# Effective QuickBooks Online
 
-Create Quickbooks Online SalesReceipts for purchased effective orders.
+Create QuickBooks Online SalesReceipts for purchased effective orders. This is an unofficial integration that is not supported by or affiliated with Intuit.
 
 ## Getting Started
 
@@ -44,7 +44,7 @@ Add a link to the admin menu:
 
 ```haml
 - if can? :admin, :effective_qb_online
-  = nav_link_to 'Quickbooks Online', effective_qb_online.admin_quickbooks_path
+  = nav_link_to 'QuickBooks Online', effective_qb_online.admin_quickbooks_path
 ```
 
 and visit `/admin/quickbooks`.
@@ -66,23 +66,11 @@ if user.admin?
 end
 ```
 
-## Configuring Quickbooks Company
+## Configuring QuickBooks Company
 
 This gem has only been tested with Canadian Quickbooks Online stores.
 
-It supports and expects the GST, HST and Tax Exempt tax codes are available in Quickbooks.
-
-This gem will not work with multi-currency enabled companies.
-
-We only create Customers and Sales Receipts with the Accounting API.
-
-We do not interact with the Payments API.
-
-We do not support any regulated industries.
-
-The data sent to Quickbooks Online is an order's: invoice number, date of purchase, customer name, email, billing & shipping address, order items, notes, prices, taxes and totals.
-
-We do not store, transmit, or interact with credit card or bank account numbers in any way.
+It has GST, HST and Tax Exempt tax codes and rates set up ahead of time by QuickBooks.
 
 ## License
 

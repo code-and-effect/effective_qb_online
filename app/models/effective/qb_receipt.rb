@@ -13,7 +13,7 @@ module Effective
       # QuickBooks Customer
       customer_id               :string
 
-      # Quickbooks Online SalesReceipt id, once sync'd
+      # QuickBooks Online SalesReceipt id, once sync'd
       sales_receipt_id          :string
 
       # Any error message from our sync
@@ -57,7 +57,7 @@ module Effective
     end
 
     def sync!(force: false)
-      raise('Already created SalesReceipt with Quickbooks Online') if sales_receipt_id.present? && !force
+      raise('Already created SalesReceipt with QuickBooks Online') if sales_receipt_id.present? && !force
       save!
 
       api = EffectiveQbOnline.api
@@ -68,7 +68,7 @@ module Effective
 
         # Sanity check
         if (expected = api.price_to_amount(order.total)) != sales_receipt.total
-          raise("A Quickbooks Online Sales Receipt has been created with an unexpected total. Quickbooks total is #{sales_receipt.total} but we expected #{expected}. Please adjust the Sales Receipt on Quickbooks")
+          raise("A QuickBooks Online Sales Receipt has been created with an unexpected total. QuickBooks total is #{sales_receipt.total} but we expected #{expected}. Please adjust the Sales Receipt on QuickBooks")
         end
 
         assign_attributes(result: 'completed successfully', sales_receipt_id: sales_receipt.id)

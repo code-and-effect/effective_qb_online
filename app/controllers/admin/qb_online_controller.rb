@@ -7,7 +7,7 @@ module Admin
 
     # /admin/quickbooks
     def index
-      @page_title = 'Quickbooks Online'
+      @page_title = 'QuickBooks Online'
     end
 
   end

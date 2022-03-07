@@ -2,7 +2,7 @@ require 'test_helper'
 
 class QbEffctiveOrdersTest < ActiveSupport::TestCase
 
-  test 'purchasing an effective order syncs with Quickbooks' do
+  test 'purchasing an effective order syncs with QuickBooks' do
     api = EffectiveQbOnline.api
     items = api.items().reject { |item| item.type == 'Category' }
 
