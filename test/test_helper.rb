@@ -34,7 +34,7 @@ class ActiveSupport::TestCase
   include EffectiveQbOnlineTestHelper
 end
 
-# Quickbooks Online Specific Stuff
+# QuickBooks Online Specific Stuff
 Quickbooks.sandbox_mode = true
 
 if ENV['QB_REALM_ID'].blank?

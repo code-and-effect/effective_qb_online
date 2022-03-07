@@ -1,10 +1,10 @@
-# One Quickbooks Realm / Company
+# One QuickBooks Realm / Company
 
 module Effective
   class QbRealm < ActiveRecord::Base
 
     effective_resource do
-      # As per Quickbooks oAuth
+      # As per QuickBooks oAuth
       realm_id                    :string
 
       access_token                :text
@@ -30,7 +30,7 @@ module Effective
     validates :refresh_token_expires_at, presence: true
 
     def to_s
-      'Quickbooks Online Settings'
+      'QuickBooks Online Settings'
     end
 
   end

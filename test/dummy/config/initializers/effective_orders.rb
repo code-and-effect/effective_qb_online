@@ -21,7 +21,7 @@ EffectiveOrders.setup do |config|
   # Use effective_obfuscation gem to change order.id into a seemingly random 10-digit number
   config.obfuscate_order_ids = false
 
-  # Effective Quickbooks Synchronization
+  # Effective QuickBooks Synchronization
   config.use_effective_qb_sync = false
   config.use_effective_qb_online = true
 
