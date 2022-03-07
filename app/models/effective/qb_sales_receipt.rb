@@ -54,7 +54,7 @@ module Effective
       # Receipt
       sales_receipt = Quickbooks::Model::SalesReceipt.new(
         customer_id: receipt.customer_id,
-        deposit_to_account_id: api.realm.deposit_to_account_id,   # The ID of the Account Entity you want hte SalesReceipt to be deposited to
+        deposit_to_account_id: api.realm.deposit_to_account_id,   # The ID of the Account Entity you want the SalesReceipt to be deposited to
         payment_method_id: api.realm.payment_method_id,           # The ID of the PaymentMethod Entity
         payment_ref_number: order.to_param,                       # Optional payment reference number/string
         txn_date: order.purchased_at.to_date,

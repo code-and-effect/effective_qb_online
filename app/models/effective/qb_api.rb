@@ -135,8 +135,8 @@ module Effective
       with_service('TaxRate') { |service| service.all }
     end
 
-    # Returns a Hash of BigNumeral Tax Rate => TaxCode Object
-    # { 0.0 => Quickbooks::Model::TaxCode }
+    # Returns a Hash of BigDecimal.to_s String Tax Rate => TaxCode Object
+    # { '0.0' => 'Quickbooks::Model::TaxCode(Exempt)', '5.0' => 'Quickbooks::Model::TaxCode(GST)' }
     def taxes_collection
       rates = tax_rates()
       codes = tax_codes()

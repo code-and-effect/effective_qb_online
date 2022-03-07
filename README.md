@@ -68,9 +68,21 @@ end
 
 ## Configuring Quickbooks Company
 
-This gem has only been tested with a Canadian Quickbooks Online store.
+This gem has only been tested with Canadian Quickbooks Online stores.
 
-It has GST, HST and Tax Exempt tax codes and rates set up ahead of time by Quickbooks.
+It supports and expects the GST, HST and Tax Exempt tax codes are available in Quickbooks.
+
+This gem will not work with multi-currency enabled companies.
+
+We only create Customers and Sales Receipts with the Accounting API.
+
+We do not interact with the Payments API.
+
+We do not support any regulated industries.
+
+The data sent to Quickbooks Online is an order's: invoice number, date of purchase, customer name, email, billing & shipping address, order items, notes, prices, taxes and totals.
+
+We do not store, transmit, or interact with credit card or bank account numbers in any way.
 
 ## License
 
