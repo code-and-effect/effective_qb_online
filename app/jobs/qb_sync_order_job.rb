@@ -1,7 +1,7 @@
 class QbSyncOrderJob < ApplicationJob
   queue_as :default
 
-  def perform(order)
+  def perform(order, opts = {})
     raise('expected a purchased Effective::Order') unless order.kind_of?(Effective::Order) && order.purchased?
 
     puts "Starting QB Sync Order Job for order #{order}"
