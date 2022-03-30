@@ -35,6 +35,6 @@
 
               = existing || fi.object.order_item_qb_name || '-'
 
-            %td= fi.select :item_id, items_collection, grouped: true, label: false
+            %td= fi.select :item_id, items_collection, grouped: true, label: false, template: :html
 
   = f.submit 'Save and Sync'

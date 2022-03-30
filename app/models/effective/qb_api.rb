@@ -41,6 +41,14 @@ module Effective
       )
     end
 
+    def api_error
+      begin
+        company_info.present?; nil
+      rescue => e
+        return e.message
+      end
+    end
+
     # Singular
     def company_info
       with_service('CompanyInfo') { |service| service.fetch_by_id(realm.realm_id) }
@@ -67,8 +75,18 @@ module Effective
       items
         .reject { |item| item.type == 'Category' }
         .sort_by { |item| [item.type, item.name] }
-        .map { |item| [item.name, item.id, item.type] }
+        .map { |item| [item.name, item.id, {'data-html': item_html(item)}, item.type] }
         .group_by(&:last)
+    end
+
+    def item_html(item)
+      details = [
+        ("##{item.id}"),
+        (item.sku if item.sku.present?),
+        (item.description if item.description.present?)
+      ].compact.join(', ')
+
+      "<span>#{item.name}</span> <small>(#{details})</small>"
     end
 
     def payment_methods

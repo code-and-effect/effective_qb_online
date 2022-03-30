@@ -1,6 +1,10 @@
 # Configure Rails Environment
 ENV["RAILS_ENV"] = "test"
 
+if ENV['QB_REALM_ID'].blank?
+  require "dotenv/load"
+end
+
 require_relative "../test/dummy/config/environment"
 ActiveRecord::Migrator.migrations_paths = [File.expand_path("../test/dummy/db/migrate", __dir__)]
 ActiveRecord::Migrator.migrations_paths << File.expand_path('../db/migrate', __dir__)
@@ -36,10 +40,6 @@ end
 
 # QuickBooks Online Specific Stuff
 Quickbooks.sandbox_mode = true
-
-if ENV['QB_REALM_ID'].blank?
-  require "dotenv/load"
-end
 
 # Load the seeds
 load "#{__dir__}/../db/seeds.rb"

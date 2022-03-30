@@ -1,32 +1,46 @@
-%table.table.table-sm
-  - company_info = api.company_info
+- company_info = (api.company_info rescue nil)
 
-  %tbody
-    %tr
-      %td Name
-      %td= company_info.company_name
+- if company_info.present?
+  %table.table.table-sm
+    %tbody
+      %tr
+        %td Name
+        %td= company_info.company_name
 
-    %tr
-      %td Country
-      %td= company_info.country
+      %tr
+        %td Country
+        %td= company_info.country
 
-    %tr
-      %td QuickBooks Online
-      %td
-        = link_to('Revoke Access and Disconnect', effective_qb_online.revoke_quickbooks_oauth_path, class: 'btn btn-sm btn-danger', 'data-method': 'delete', 'data-confirm': 'Really disconnect from QuickBooks Online?')
+      %tr
+        %td QuickBooks Online
+        %td
+          = link_to('Revoke Access and Disconnect', effective_qb_online.revoke_quickbooks_oauth_path, class: 'btn btn-sm btn-danger', 'data-method': 'delete', 'data-confirm': 'Really disconnect from QuickBooks Online?')
 
-    %tr
-      %td Deposit to Account
-      %td
-        = effective_form_with(model: [:admin, api.realm], engine: true) do |f|
-          .row
-            .col= f.select :deposit_to_account_id, api.accounts_collection, grouped: true, label: false
-            .col= f.save
+      %tr
+        %td Deposit to Account
+        %td
+          = effective_form_with(model: [:admin, api.realm], engine: true) do |f|
+            .row
+              .col= f.select :deposit_to_account_id, api.accounts_collection, grouped: true, label: false
+              .col= f.save
 
-    %tr
-      %td Payment Method
-      %td
-        = effective_form_with(model: [:admin, api.realm], engine: true) do |f|
-          .row
-            .col= f.select :payment_method_id, api.payment_methods_collection, label: false
-            .col= f.save
+      %tr
+        %td Payment Method
+        %td
+          = effective_form_with(model: [:admin, api.realm], engine: true) do |f|
+            .row
+              .col= f.select :payment_method_id, api.payment_methods_collection, label: false
+              .col= f.save
+
+
+- if company_info.blank?
+  %table.table.table-sm
+    %tbody
+      %tr
+        %td QuickBooks API Error
+        %td= api.api_error
+
+      %tr
+        %td QuickBooks Online
+        %td
+          = link_to('Revoke Access and Disconnect', effective_qb_online.revoke_quickbooks_oauth_path, class: 'btn btn-sm btn-danger', 'data-method': 'delete', 'data-confirm': 'Really disconnect from QuickBooks Online?')
