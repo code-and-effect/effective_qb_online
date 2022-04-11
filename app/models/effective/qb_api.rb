@@ -75,8 +75,17 @@ module Effective
       items
         .reject { |item| item.type == 'Category' }
         .sort_by { |item| [item.type, item.name] }
-        .map { |item| [item.name, item.id, {'data-html': item_html(item)}, item.type] }
+        .map { |item| [item_name(item), item.id, {'data-html': item_html(item)}, item.type] }
         .group_by(&:last)
+    end
+
+    def item_name(item)
+      [
+        item.name,
+        ("##{item.id}"),
+        (item.sku if item.sku.present?),
+        (item.description if item.description.present?)
+      ].compact.join(' ')
     end
 
     def item_html(item)
