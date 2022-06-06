@@ -11,8 +11,13 @@
     = card('Test Credentials') do
       = render('test_credentials', api: api)
 
-  = card('Company') do
-    = render('company', api: api)
+  - if api.realm&.configured?
+    .mb-2
+      = collapse('Show Company Settings') do
+        = render('company', api: api)
+  - else
+    = card('Company') do
+      = render('company', api: api)
 
   = card('Sales Receipts') do
     .text-right.mb-2

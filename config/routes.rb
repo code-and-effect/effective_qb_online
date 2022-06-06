@@ -21,6 +21,7 @@ EffectiveQbOnline::Engine.routes.draw do
     end
 
     get '/quickbooks', to: 'qb_online#index', as: :quickbooks
+    get '/quickbooks/items', to: 'qb_online#items', as: :quickbooks_items
   end
 
 end
