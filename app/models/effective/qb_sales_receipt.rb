@@ -30,17 +30,23 @@ module Effective
         raise("Expected a purchasable for Effective::OrderItem #{receipt_item.order_item.id}") unless purchasable.present?
 
         # Either of these could match
-        purchasable_id_name = [purchasable.try(:qb_item_id), purchasable.try(:qb_item_name)].compact
+        purchasable_id_name = [
+          (scrub(purchasable.qb_item_id) if purchasable.try(:qb_item_id)),
+          (scrub(purchasable.qb_item_name) if purchasable.try(:qb_item_name))
+        ].compact
 
         # Find item by receipt item
-        item = items.find { |item| [item.id, item.name].include?(receipt_item.item_id) }
+        item = items.find do |item|
+          [scrub(item.id), scrub(item.name), scrub(item.fully_qualified_name)].include?(scrub(receipt_item.item_id))
+        end
 
         # Find item by purchasable qb_item_id and qb_item_name
-        item ||= begin
-          items.find { |item| ([item.id, item.name] & purchasable_id_name).present? }
+        item ||= items.find do |item|
+          ([scrub(item.id), scrub(item.name), scrub(item.fully_qualified_name)] & purchasable_id_name).present?
         end
 
         if item.blank?
+          purchasable_id_name = [purchasable.try(:qb_item_id), purchasable.try(:qb_item_name)].compact
           raise("Unknown Item #{purchasable_id_name.join(' or ')} from #{purchasable} (#{purchasable.class.name} ##{purchasable.id})")
         end
 
@@ -97,6 +103,12 @@ module Effective
 
       # Return a Quickbooks::Model::SalesReceipt that is ready to create
       sales_receipt
+    end
+
+    private
+
+    def self.scrub(value)
+      value.to_s.downcase.strip
     end
 
   end
