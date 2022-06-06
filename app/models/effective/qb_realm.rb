@@ -33,5 +33,9 @@ module Effective
       'QuickBooks Online Settings'
     end
 
+    def configured?
+      realm_id.present? && access_token.present? && deposit_to_account_id.present? && payment_method_id.present?
+    end
+
   end
 end

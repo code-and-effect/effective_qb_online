@@ -32,6 +32,9 @@
               .col= f.select :payment_method_id, api.payment_methods_collection, label: false
               .col= f.save
 
+      %tr
+        %td Items
+        %td= link_to 'Quickbooks Items', effective_qb_online.admin_quickbooks_items_path
 
 - if company_info.blank?
   %table.table.table-sm

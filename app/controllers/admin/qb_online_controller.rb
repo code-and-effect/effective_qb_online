@@ -5,9 +5,14 @@ module Admin
 
     include Effective::CrudController
 
+    page_title 'QuickBooks Online'
+
     # /admin/quickbooks
     def index
-      @page_title = 'QuickBooks Online'
+    end
+
+    # /admin/quickbooks/items
+    def items
     end
 
   end

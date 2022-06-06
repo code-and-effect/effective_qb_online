@@ -26,6 +26,13 @@ module Admin
       col :status
       col :result
 
+      col :order_items, label: 'Purchasable Qb Item Names' do |receipt|
+        receipt.order.purchasables.map do |purchasable|
+          purchasable_id_name = [purchasable.try(:qb_item_id), purchasable.try(:qb_item_name)].compact
+          content_tag(:div, purchasable_id_name.join(' or '), class: "col-resource_item")
+        end.join.html_safe
+      end
+
       actions_col
     end
 
