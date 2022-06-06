@@ -41,7 +41,7 @@ module Effective
         end
 
         if item.blank?
-          raise("Unknown Item for #{purchasable} (#{purchasable.class.name} ##{purchasable.id} #{purchasable_id_name.join(' or ')})")
+          raise("Unknown Item #{purchasable_id_name.join(' or ')} from #{purchasable} (#{purchasable.class.name} ##{purchasable.id})")
         end
 
         receipt_item.update!(item_id: item.id)
