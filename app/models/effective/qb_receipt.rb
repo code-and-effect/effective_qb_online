@@ -79,7 +79,6 @@ module Effective
         error!
       end
 
-      true
     end
 
     def skip!
@@ -93,6 +92,9 @@ module Effective
 
     def error!
       errored!
+      EffectiveLogger.error(result, associated: self) if defined?(EffectiveLogger)
+
+      false
     end
 
   end

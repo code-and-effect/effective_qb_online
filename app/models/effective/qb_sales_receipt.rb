@@ -29,17 +29,19 @@ module Effective
         purchasable = receipt_item.order_item.purchasable
         raise("Expected a purchasable for Effective::OrderItem #{receipt_item.order_item.id}") unless purchasable.present?
 
+        # Either of these could match
+        purchasable_id_name = [purchasable.try(:qb_item_id), purchasable.try(:qb_item_name)].compact
+
         # Find item by receipt item
         item = items.find { |item| [item.id, item.name].include?(receipt_item.item_id) }
 
         # Find item by purchasable qb_item_id and qb_item_name
         item ||= begin
-          purchasable_id_name = [purchasable.try(:qb_item_id), purchasable.try(:qb_item_name)]
           items.find { |item| ([item.id, item.name] & purchasable_id_name).present? }
         end
 
         if item.blank?
-          raise("Unknown QuickBooks Item for #{purchasable} (#{purchasable.class.name} ##{purchasable.id})")
+          raise("Unknown Item for #{purchasable} (#{purchasable.class.name} ##{purchasable.id} #{purchasable_id_name.join(' or ')})")
         end
 
         receipt_item.update!(item_id: item.id)
