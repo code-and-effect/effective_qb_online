@@ -25,6 +25,19 @@ module Effective
       # Find and validate items
       items = api.items()
 
+      # Credit card surcharge item
+      surcharge_item = if EffectiveOrders.try(:credit_card_surcharge_qb_item_name).present?
+        name = EffectiveOrders.credit_card_surcharge_qb_item_name
+
+        item = items.find do |item|
+          [scrub(item.id), scrub(item.name), scrub(item.fully_qualified_name)].include?(scrub(name))
+        end
+
+        raise("Missing Credit Card Surcharge item #{name}. Please add this to your Quickbooks items.") unless item.present?
+
+        item
+      end
+
       receipt.qb_receipt_items.each do |receipt_item|
         purchasable = receipt_item.order_item.purchasable
         raise("Expected a purchasable for Effective::OrderItem #{receipt_item.order_item.id}") unless purchasable.present?
@@ -93,6 +106,23 @@ module Effective
 
           line.unit_price = api.price_to_amount(order_item.price)
           line.quantity = order_item.quantity
+        end
+
+        sales_receipt.line_items << line_item
+      end
+
+      # Add Credit Card Surcharge
+      if order.try(:surcharge).to_i != 0
+        raise("Expected a Credit Card Surcharge QuickBooks item to exist for Effective::Order #{order.id} with non-zero surcharge amount. Please check your configuration.") unless surcharge_item.present?
+
+        line_item = Quickbooks::Model::Line.new(amount: api.price_to_amount(order.surcharge), description: 'Credit Card Surcharge')
+
+        line_item.sales_item! do |line|
+          line.item_id = surcharge_item.item_id
+          line.tax_code_id = tax_exempt.id
+
+          line.unit_price = api.price_to_amount(order.surcharge)
+          line.quantity = 1
         end
 
         sales_receipt.line_items << line_item
