@@ -119,7 +119,7 @@ module Effective
 
         line_item.sales_item! do |line|
           line.item_id = surcharge_item.item_id
-          line.tax_code_id = tax_exempt.id
+          line.tax_code_id = tax_code.id  # Surcharge is taxed at same rate as items
 
           line.unit_price = api.price_to_amount(order.surcharge)
           line.quantity = 1
