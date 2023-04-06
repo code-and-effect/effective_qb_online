@@ -110,7 +110,7 @@ module Effective
 
         # Find by given name and family name
         customer ||= if user.respond_to?(:first_name) && user.respond_to?(:last_name)
-          service.query("SELECT * FROM Customer WHERE GivenName LIKE '#{scrub(user.first_name)}' AND FamilyName LIKE '#{scrub(user.last_name)}'")&.first
+          service.query("SELECT * FROM Customer WHERE GivenName LIKE '#{scrub(user.first_name, sql: true)}' AND FamilyName LIKE '#{scrub(user.last_name, sql: true)}'")&.first
         end
 
         # Find by display name
@@ -217,9 +217,11 @@ module Effective
       end
     end
 
-    def scrub(value)
+    def scrub(value, sql: false)
       return nil unless value.present?
-      value.gsub(':', '')
+      value = value.gsub(':', '')
+      value = value.gsub("'", "\\'") if sql
+      value
     end
 
   end
