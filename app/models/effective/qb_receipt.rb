@@ -74,7 +74,7 @@ module Effective
         assign_attributes(result: 'completed successfully', sales_receipt_id: sales_receipt.id)
         complete!
       rescue => e
-        result = [e.message, *("(intuit_tid: #{e.intuit_tid})" if e.try(:intuit_tid).present?), e.backtrace.first(5).join("\n\n")].join(' ')
+        result = [e.message, *("(intuit_tid: #{e.intuit_tid})" if e.try(:intuit_tid).present?), e.backtrace.first(15).join("\n\n")].join(' ')
         assign_attributes(result: result)
         error!
       end
