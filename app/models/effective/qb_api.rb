@@ -221,7 +221,7 @@ module Effective
       return nil unless value.present?
       value = value.gsub(':', '')
       value = value.gsub("'", "\\'") if sql
-      value
+      value.strip
     end
 
   end
