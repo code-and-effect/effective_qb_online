@@ -20,11 +20,7 @@ module EffectiveQbOnline
       end
 
       def create_migration_file
-        @qb_realms_table_name  = ':' + EffectiveQbOnline.qb_realms_table_name.to_s
-        @qb_receipts_table_name  = ':' + EffectiveQbOnline.qb_receipts_table_name.to_s
-        @qb_receipt_items_table_name  = ':' + EffectiveQbOnline.qb_receipt_items_table_name.to_s
-
-        migration_template ('../' * 3) + 'db/migrate/01_create_effective_qb_online.rb.erb', 'db/migrate/create_effective_qb_online.rb'
+        migration_template ('../' * 3) + 'db/migrate/101_create_effective_qb_online.rb', 'db/migrate/create_effective_qb_online.rb'
       end
 
     end

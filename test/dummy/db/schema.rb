@@ -10,13 +10,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 7) do
+ActiveRecord::Schema.define(version: 101) do
 
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
     t.string "record_type", null: false
-    t.bigint "record_id", null: false
+    t.integer "record_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["record_type", "record_id", "name"], name: "index_action_text_rich_texts_uniqueness", unique: true
@@ -166,8 +166,8 @@ ActiveRecord::Schema.define(version: 7) do
 
   create_table "qb_realms", force: :cascade do |t|
     t.string "realm_id"
-    t.string "deposit_to_account_id"
-    t.string "payment_method_id"
+    t.integer "deposit_to_account_id"
+    t.integer "payment_method_id"
     t.text "access_token"
     t.datetime "access_token_expires_at"
     t.text "refresh_token"
@@ -176,23 +176,23 @@ ActiveRecord::Schema.define(version: 7) do
     t.datetime "updated_at", precision: 6, null: false
   end
 
-  create_table "qb_receipt_items", force: :cascade do |t|
+  create_table "qb_receipt_items_name", force: :cascade do |t|
     t.integer "qb_receipt_id"
     t.integer "order_item_id"
-    t.string "item_id"
+    t.integer "item_id"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "qb_receipts", force: :cascade do |t|
     t.integer "order_id"
-    t.string "customer_id"
-    t.string "sales_receipt_id"
+    t.integer "customer_id"
     t.text "result"
     t.string "status"
     t.text "status_steps"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.index ["order_id"], name: "index_qb_receipts_on_order_id"
   end
 
   create_table "subscriptions", force: :cascade do |t|

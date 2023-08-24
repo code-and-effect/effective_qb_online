@@ -1,8 +1,4 @@
 EffectiveQbOnline.setup do |config|
-  config.qb_realms_table_name = :qb_realms
-  config.qb_receipts_table_name = :qb_receipts
-  config.qb_receipt_items_table_name = :qb_receipt_items
-
   # Layout Settings
   # Configure the Layout per controller, or all at once
   # config.layout = { application: 'application', admin: 'admin' }
