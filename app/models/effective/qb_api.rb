@@ -97,36 +97,30 @@ module Effective
       payment_methods.sort_by(&:name).map { |payment_method| [payment_method.name, payment_method.id] }
     end
 
-    def find_or_create_customer(user:)
-      find_customer(user: user) || create_customer(user: user)
+    def find_or_create_customer(order:)
+      find_customer(order: order) || create_customer(order: order)
     end
 
-    def find_customer(user:)
-      raise('expected a user that responds to email') unless user.respond_to?(:email)
+    def find_customer(order:)
+      raise('expected an Effective::Order') unless order.kind_of?(Effective::Order)
 
       with_service('Customer') do |service|
         # Find by email
-        customer = service.find_by(:PrimaryEmailAddr, user.email)&.first
-
-        # Find by given name and family name
-        customer ||= if user.respond_to?(:first_name) && user.respond_to?(:last_name)
-          service.query("SELECT * FROM Customer WHERE GivenName LIKE '#{scrub(user.first_name, sql: true)}' AND FamilyName LIKE '#{scrub(user.last_name, sql: true)}'")&.first
-        end
+        customer = service.find_by(:PrimaryEmailAddr, order.email)&.first
 
         # Find by display name
-        customer || service.find_by(:display_name, scrub(user.to_s))&.first
+        customer || service.find_by(:display_name, scrub(order.billing_name))&.first
       end
     end
 
-    def create_customer(user:)
-      raise('expected a user that responds to email') unless user.respond_to?(:email)
+    # https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/customer#create-a-customer
+    def create_customer(order:)
+      raise('expected an Effective::Order') unless order.kind_of?(Effective::Order)
 
       with_service('Customer') do |service|
         customer = Quickbooks::Model::Customer.new(
-          primary_email_address: Quickbooks::Model::EmailAddress.new(user.email),
-          display_name: scrub(user.to_s),
-          given_name: scrub(user.try(:first_name)),
-          family_name: scrub(user.try(:last_name))
+          primary_email_address: Quickbooks::Model::EmailAddress.new(order.email),
+          display_name: scrub(order.billing_name)
         )
 
         service.create(customer)

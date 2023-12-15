@@ -68,7 +68,7 @@ module Effective
 
       # Find or build customer
       if receipt.customer_id.blank?
-        customer = api.find_or_create_customer(user: user)
+        customer = api.find_or_create_customer(order: order)
         receipt.update!(customer_id: customer.id)
       end
 
