@@ -10,9 +10,7 @@ module Effective
 
       order = receipt.order
       raise('Expected a purchased Effective::Order') unless order.purchased?
-
-      user = order.user
-      raise('Expected a user with an email') unless user.respond_to?(:email)
+      raise('Expected an order with billing name') unless order.billing_name.present?
 
       realm = api.realm
       raise('Missing Deposit to Account') unless realm.deposit_to_account_id.present?
