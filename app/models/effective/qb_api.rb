@@ -105,11 +105,7 @@ module Effective
       raise('expected an Effective::Order') unless order.kind_of?(Effective::Order)
 
       with_service('Customer') do |service|
-        # Find by email
-        customer = service.find_by(:PrimaryEmailAddr, order.email)&.first
-
-        # Find by display name
-        customer || service.find_by(:display_name, scrub(order.billing_name))&.first
+        service.find_by(:display_name, scrub(order.billing_name))&.first
       end
     end
 
