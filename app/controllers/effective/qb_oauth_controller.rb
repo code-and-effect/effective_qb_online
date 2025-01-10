@@ -17,7 +17,7 @@ module Effective
         scope: 'com.intuit.quickbooks.accounting'
       )
 
-      redirect_to(grant_url)
+      redirect_to(grant_url, allow_other_host: true)
     end
 
     # This matches the QuickBooks Redirect URI and we have to set it up ahead of time.
@@ -39,7 +39,7 @@ module Effective
 
       flash[:success] = 'Successfully connected with QuickBooks Online'
 
-      redirect_to(effective_qb_online.admin_quickbooks_path)
+      redirect_to(effective_qb_online.admin_quickbooks_path, allow_other_host: true)
     end
 
     def revoke
@@ -59,7 +59,7 @@ module Effective
         flash[:danger] = 'Unable to revoke'
       end
 
-      redirect_to(effective_qb_online.admin_quickbooks_path)
+      redirect_to(effective_qb_online.admin_quickbooks_path, allow_other_host: true)
     end
 
     private
