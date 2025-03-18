@@ -160,17 +160,15 @@ module Effective
       exempt = [['0.0', exempt]] if exempt.present?
 
       # Find The rest
-      tax_codes = codes.map do |code|
+      tax_codes = codes.select(&:active?).map do |code|
         rate_id = code.sales_tax_rate_list.tax_rate_detail.first&.tax_rate_ref&.value
         rate = rates.find { |rate| rate.id == rate_id } if rate_id
 
         [rate.rate_value.to_s, code] if rate && (exempt.blank? || rate.rate_value.to_f > 0.0)
       end
 
-      (Array(exempt) + tax_codes.compact).to_h
+      (Array(exempt) + tax_codes.uniq { |key, _| key }.compact).to_h
     end
-
-    private
 
     def with_service(name, &block)
       klass = "Quickbooks::Service::#{name}".constantize
@@ -180,6 +178,8 @@ module Effective
         yield(service)
       end
     end
+
+    private
 
     def with_authenticated_request(max_attempts: 3, &block)
       attempts = 0
