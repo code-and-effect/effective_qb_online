@@ -164,7 +164,7 @@ module Effective
         rate_id = code.sales_tax_rate_list.tax_rate_detail.first&.tax_rate_ref&.value
         rate = rates.find { |rate| rate.id == rate_id } if rate_id
 
-        [rate.rate_value.to_s, code] if rate && (exempt.blank? || rate.rate_value > 0.0)
+        [rate.rate_value.to_s, code] if rate && (exempt.blank? || rate.rate_value.to_f > 0.0)
       end
 
       (Array(exempt) + tax_codes.compact).to_h
