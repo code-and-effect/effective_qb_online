@@ -75,6 +75,7 @@ module Effective
         customer_id: receipt.customer_id,
         deposit_to_account_id: api.realm.deposit_to_account_id,   # The ID of the Account Entity you want the SalesReceipt to be deposited to
         payment_method_id: api.realm.payment_method_id,           # The ID of the PaymentMethod Entity
+        doc_number: order.to_param,                               # This is the transaction # field
         payment_ref_number: order.to_param,                       # Optional payment reference number/string
         txn_date: order.purchased_at.to_date,
         customer_memo: order.note_to_buyer,
@@ -82,9 +83,6 @@ module Effective
         bill_email: Quickbooks::Model::EmailAddress.new(order.email),
         email_status: 'EmailSent'
       )
-
-      # Allows QuickBooks to auto-generate the transaction number
-      sales_receipt.auto_doc_number!
 
       # Addresses
       sales_receipt.bill_address = api.build_address(order.billing_address) if order.billing_address.present?
