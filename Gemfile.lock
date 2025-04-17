@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    effective_qb_online (0.4.0)
+    effective_qb_online (0.6.4)
       effective_bootstrap
       effective_datatables
       effective_orders

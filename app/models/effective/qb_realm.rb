@@ -14,8 +14,9 @@ module Effective
       refresh_token_expires_at    :datetime
 
       # Set on /admin/quickbooks
-      deposit_to_account_id       :string
-      payment_method_id           :string
+      deposit_to_account_id               :string
+      payment_method_id                   :string
+      order_number_as_transaction_number  :boolean, default: false
 
       timestamps
     end

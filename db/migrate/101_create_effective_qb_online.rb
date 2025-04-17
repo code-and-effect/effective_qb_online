@@ -5,6 +5,7 @@ class CreateEffectiveQbOnline < ActiveRecord::Migration[6.0]
 
       t.integer :deposit_to_account_id
       t.integer :payment_method_id
+      t.boolean :order_number_as_transaction_number, default: false
 
       t.text :access_token
       t.datetime :access_token_expires_at

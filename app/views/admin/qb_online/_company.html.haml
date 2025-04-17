@@ -33,6 +33,15 @@
               .col= f.save
 
       %tr
+        %td Transaction Number
+        %td
+          = effective_form_with(model: [:admin, api.realm], engine: true) do |f|
+            .row
+              - collection = [["Use our order receipt number", true], ["Use QuickBooks auto-generated number", false]]
+              .col= f.select :order_number_as_transaction_number, collection, label: false
+              .col= f.save
+
+      %tr
         %td Items
         %td= link_to 'Quickbooks Items', effective_qb_online.admin_quickbooks_items_path
 
