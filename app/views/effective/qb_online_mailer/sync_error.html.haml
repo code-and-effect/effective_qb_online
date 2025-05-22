@@ -1,0 +1,44 @@
+%p An error occurred while synchronizing Order ##{@order.to_param} to Quickbooks Online
+
+%div
+  %strong Error Message
+= simple_format(@qb_receipt.result)
+
+%div
+  %strong= "Order ##{@order.to_param}"
+  %br
+  = @order.created_at
+  %br
+  = @order.billing_name
+%p
+  - @order.order_items.each do |oi|
+    = "#{oi.name} (#{oi.try(:qb_item_name)})"
+    %br
+
+%p
+  %strong Resolution Steps
+  %br
+
+  - if @qb_receipt.result.to_s.include?('Duplicate Name Exists')
+    %ul
+      %li This customer could not be created because they share a name with an existing Item Name. This could be as a Vendor, Product, or Service.
+      %li Search QuickBooks for the non-customer item name and rename it. Ex: rename "John Doe" to "John Doe (Vendor)"
+      %li Re-run the QuickBooks Sync
+  - elsif @qb_receipt.result.to_s.include?('Unknown Item')
+    %ul
+      %li Confirm the QuickBooks Item Names for this Order within QuickBooks
+      %li If this Item Name does not exist, add it to QuickBooks
+      %li Otherwise, #{link_to('click here', effective_qb_online.edit_admin_qb_receipt_url(@qb_receipt))} to assign the correct Item Name to this Order
+      %li Re-run the QuickBooks Sync
+  - else
+    %ul
+      %li This is an error without a predefined resolution.
+      %li Please contact support.
+
+%hr
+
+%p{style: "text-align: center;"}
+  = link_to "View Quickbooks Sales Receipts", effective_qb_online.admin_quickbooks_url
+
+%p{style: "text-align: center;"}
+  = link_to "View Order ##{@order.to_param}", effective_orders.admin_order_url(@order)

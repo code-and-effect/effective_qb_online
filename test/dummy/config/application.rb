@@ -23,5 +23,8 @@ module Dummy
     # config.eager_load_paths << Rails.root.join("extras")
 
     config.active_job.queue_adapter = :inline
+
+    # Use unsafe YAML load for serialized columns
+    config.active_record.use_yaml_unsafe_load = true
   end
 end
