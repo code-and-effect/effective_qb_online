@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    effective_qb_online (0.6.4)
+    effective_qb_online (0.7.0)
       effective_bootstrap
       effective_datatables
       effective_orders
@@ -136,10 +136,10 @@ GEM
       effective_resources
       rails (>= 3.2.0)
       sassc
-    effective_developer (0.7.6)
+    effective_developer (0.9.0)
       effective_resources
       rails (>= 3.2.0)
-    effective_orders (6.8.0)
+    effective_orders (6.25.1)
       coffee-rails
       effective_addresses
       effective_bootstrap
@@ -147,8 +147,9 @@ GEM
       effective_resources
       rails (>= 4.0.0)
       sassc
-    effective_resources (2.8.7)
-      rails (>= 4.0.0)
+    effective_resources (2.30.0)
+      rails
+      sprockets-rails
     effective_test_bot (1.4.0)
       capybara
       effective_resources

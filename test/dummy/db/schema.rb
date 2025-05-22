@@ -73,8 +73,8 @@ ActiveRecord::Schema.define(version: 101) do
     t.integer "purchasable_id"
     t.string "unique"
     t.integer "quantity"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
     t.index ["cart_id"], name: "index_cart_items_on_cart_id"
     t.index ["purchasable_id"], name: "index_cart_items_on_purchasable_id"
     t.index ["purchasable_type", "purchasable_id"], name: "index_cart_items_on_purchasable_type_and_purchasable_id"
@@ -84,8 +84,8 @@ ActiveRecord::Schema.define(version: 101) do
     t.integer "user_id"
     t.string "user_type"
     t.integer "cart_items_count", default: 0
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
     t.index ["user_id"], name: "index_carts_on_user_id"
   end
 
@@ -97,8 +97,8 @@ ActiveRecord::Schema.define(version: 101) do
     t.string "active_card"
     t.string "status"
     t.integer "subscriptions_count", default: 0
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
     t.index ["user_id"], name: "index_customers_on_user_id"
   end
 
@@ -114,16 +114,24 @@ ActiveRecord::Schema.define(version: 101) do
     t.datetime "updated_at"
   end
 
+  create_table "item_names", force: :cascade do |t|
+    t.string "name"
+    t.boolean "archived", default: false
+    t.datetime "updated_at"
+    t.datetime "created_at"
+    t.index ["name", "archived"], name: "index_item_names_on_name_and_archived"
+  end
+
   create_table "order_items", force: :cascade do |t|
     t.integer "order_id"
     t.string "purchasable_type"
     t.integer "purchasable_id"
     t.string "name"
     t.integer "quantity"
-    t.integer "price", default: 0
+    t.integer "price"
     t.boolean "tax_exempt"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
     t.index ["order_id"], name: "index_order_items_on_order_id"
     t.index ["purchasable_id"], name: "index_order_items_on_purchasable_id"
     t.index ["purchasable_type", "purchasable_id"], name: "index_order_items_on_purchasable_type_and_purchasable_id"
@@ -132,10 +140,15 @@ ActiveRecord::Schema.define(version: 101) do
   create_table "orders", force: :cascade do |t|
     t.integer "user_id"
     t.string "user_type"
+    t.integer "organization_id"
+    t.string "organization_type"
     t.integer "parent_id"
     t.string "parent_type"
-    t.string "state"
+    t.string "status"
+    t.text "status_steps"
     t.datetime "purchased_at"
+    t.integer "purchased_by_id"
+    t.string "purchased_by_type"
     t.text "note"
     t.text "note_to_buyer"
     t.text "note_internal"
@@ -146,11 +159,21 @@ ActiveRecord::Schema.define(version: 101) do
     t.string "payment_provider"
     t.string "payment_card"
     t.decimal "tax_rate", precision: 6, scale: 3
+    t.decimal "surcharge_percent", precision: 6, scale: 3
     t.integer "subtotal"
     t.integer "tax"
+    t.integer "amount_owing"
+    t.integer "surcharge"
+    t.integer "surcharge_tax"
     t.integer "total"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.boolean "delayed_payment", default: false
+    t.date "delayed_payment_date"
+    t.text "delayed_payment_intent"
+    t.integer "delayed_payment_total"
+    t.datetime "delayed_payment_purchase_ran_at"
+    t.text "delayed_payment_purchase_result"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
     t.index ["user_id"], name: "index_orders_on_user_id"
   end
 
@@ -160,33 +183,35 @@ ActiveRecord::Schema.define(version: 101) do
     t.integer "price"
     t.boolean "tax_exempt", default: false
     t.string "qb_item_name"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "qb_realms", force: :cascade do |t|
-    t.string "realm_id"
-    t.integer "deposit_to_account_id"
-    t.integer "payment_method_id"
-    t.text "access_token"
-    t.datetime "access_token_expires_at"
-    t.text "refresh_token"
-    t.datetime "refresh_token_expires_at"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
   end
 
-  create_table "qb_receipt_items_name", force: :cascade do |t|
+  create_table "qb_realms", force: :cascade do |t|
+    t.string "realm_id"
+    t.string "deposit_to_account_id"
+    t.string "payment_method_id"
+    t.text "access_token"
+    t.datetime "access_token_expires_at"
+    t.text "refresh_token"
+    t.datetime "refresh_token_expires_at"
+    t.boolean "order_number_as_transaction_number", default: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "qb_receipt_items", force: :cascade do |t|
     t.integer "qb_receipt_id"
     t.integer "order_item_id"
-    t.integer "item_id"
+    t.string "item_id"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "qb_receipts", force: :cascade do |t|
     t.integer "order_id"
-    t.integer "customer_id"
+    t.string "customer_id"
+    t.string "sales_receipt_id"
     t.text "result"
     t.string "status"
     t.text "status_steps"
@@ -206,8 +231,8 @@ ActiveRecord::Schema.define(version: 101) do
     t.string "interval"
     t.integer "quantity"
     t.string "status"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
     t.index ["customer_id"], name: "index_subscriptions_on_customer_id"
     t.index ["subscribable_id"], name: "index_subscriptions_on_subscribable_id"
     t.index ["subscribable_type", "subscribable_id"], name: "index_subscriptions_on_subscribable_type_and_subscribable_id"

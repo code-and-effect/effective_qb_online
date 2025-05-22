@@ -5,6 +5,9 @@ if ENV['QB_REALM_ID'].blank?
   require "dotenv/load"
 end
 
+require 'haml'
+require 'effective_orders'
+
 require_relative "../test/dummy/config/environment"
 ActiveRecord::Migrator.migrations_paths = [File.expand_path("../test/dummy/db/migrate", __dir__)]
 ActiveRecord::Migrator.migrations_paths << File.expand_path('../db/migrate', __dir__)
@@ -24,10 +27,8 @@ end
 # Custom Test Helpers
 require 'support/effective_qb_online_test_builder'
 require 'support/effective_qb_online_test_helper'
+require 'support/effective_orders_test_builder'
 require 'pry-byebug'
-
-require 'effective_orders'
-require "#{EffectiveOrders.gem_path}/test/support/effective_orders_test_builder"
 
 class ActiveSupport::TestCase
   include Warden::Test::Helpers
