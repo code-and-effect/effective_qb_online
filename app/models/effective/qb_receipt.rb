@@ -93,7 +93,7 @@ module Effective
     def error!
       errored!
       EffectiveLogger.error(result, associated: self) if defined?(EffectiveLogger)
-      EffectiveQbOnline.send_email(:sync_error, self)
+      EffectiveQbOnline.send_email(:sync_error, self) if EffectiveOrders.send_qb_online_sync_error
 
       false
     end
