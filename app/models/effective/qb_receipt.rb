@@ -67,8 +67,16 @@ module Effective
         sales_receipt = api.create_sales_receipt(sales_receipt: sales_receipt)
 
         # Sanity check
-        if (expected = api.price_to_amount(order.total)) != sales_receipt.total
-          raise("A QuickBooks Online Sales Receipt has been created with an unexpected total. QuickBooks total is #{sales_receipt.total} but we expected #{expected}. Please adjust the Sales Receipt on QuickBooks")
+        if EffectiveOrders.try(:credit_card_surcharge_qb_item_name).present?
+          if (expected = api.price_to_amount(order.total)) != sales_receipt.total
+            raise("A QuickBooks Online Sales Receipt has been created with an unexpected total. QuickBooks total is #{sales_receipt.total} but we expected #{expected}. Please adjust the Sales Receipt on QuickBooks")
+          end
+        end
+
+        if EffectiveOrders.try(:credit_card_surcharge_qb_item_name).blank?
+          if (expected = api.price_to_amount(order.amount_owing)) != sales_receipt.total
+            raise("A QuickBooks Online Sales Receipt has been created with an unexpected total. QuickBooks total is #{sales_receipt.total} but we expected #{expected}. Please adjust the Sales Receipt on QuickBooks")
+          end
         end
 
         assign_attributes(result: 'completed successfully', sales_receipt_id: sales_receipt.id)
