@@ -10,6 +10,7 @@ module Admin
       col :updated_at
 
       col :order, search: :string
+      col 'order.purchased_at'
 
       col :sales_receipt_id, label: 'QB Sales Receipt' do |receipt|
         if receipt.sales_receipt_id.present?
@@ -37,7 +38,7 @@ module Admin
     end
 
     collection do
-      Effective::QbReceipt.deep.all
+      Effective::QbReceipt.deep.all.joins(:order)
     end
 
     def api
