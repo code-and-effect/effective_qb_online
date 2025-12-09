@@ -105,7 +105,25 @@ module Effective
       raise('expected an Effective::Order') unless order.kind_of?(Effective::Order)
 
       with_service('Customer') do |service|
-        service.find_by(:display_name, scrub(order.billing_name))&.first
+        util = Quickbooks::Util::QueryBuilder.new
+
+        # Find by display name
+        customer = service.find_by(:display_name, scrub(order.qb_online_customer_display_name))&.first
+
+        # Find by email
+        customer ||= if order.email.present?
+          email = util.clause("PrimaryEmailAddr", "LIKE", order.email)
+          service.query("SELECT * FROM Customer WHERE #{email}")&.first
+        end
+
+        # Find by first name and last name
+        customer ||= if order.billing_first_name.present? && order.billing_last_name.present?
+          first_name = util.clause("GivenName", "LIKE", order.billing_first_name)
+          last_name = util.clause("FamilyName", "LIKE", order.billing_last_name)
+          service.query("SELECT * FROM Customer WHERE #{first_name} AND #{last_name}")&.first
+        end
+
+        customer
       end
     end
 
@@ -116,7 +134,7 @@ module Effective
       with_service('Customer') do |service|
         customer = Quickbooks::Model::Customer.new(
           primary_email_address: Quickbooks::Model::EmailAddress.new(order.email),
-          display_name: scrub(order.billing_name)
+          display_name: scrub(order.qb_online_customer_display_name)
         )
 
         service.create(customer)
