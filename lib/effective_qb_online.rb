@@ -10,7 +10,7 @@ module EffectiveQbOnline
       :qb_realms_table_name, :qb_receipts_table_name, :qb_receipt_items_table_name,
       :mailer, :parent_mailer, :deliver_method, :mailer_layout, :mailer_sender, :mailer_admin, :mailer_subject,
       :oauth_client_id, :oauth_client_secret,
-      :layout
+      :layout, :sync_error_cc_recipients
     ]
   end
 

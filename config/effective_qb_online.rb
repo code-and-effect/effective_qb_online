@@ -12,6 +12,12 @@ EffectiveQbOnline.setup do |config|
   # https://github.com/ruckus/quickbooks-ruby
   Quickbooks.sandbox_mode = (ENV['QUICKBOOKS_ONLINE_SANDBOX'].to_s == 'true')
 
+  # Sync Error Email
+  # When a sync error occurs, an email is sent to the following addresses:
+  # EffectiveOrders.qb_online_sync_error_recipients or EffectiveOrders.mailer_admin
+  # You can also specify a list of additional recipients to be cc'd on the email by setting:
+  # config.sync_error_cc_recipients = ['"Errors" <errors@example.com>']
+
   # Mailer Settings
   # Please see config/initializers/effective_resources.rb for default effective_* gem mailer settings
   #
