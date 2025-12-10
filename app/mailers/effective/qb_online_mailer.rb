@@ -9,10 +9,12 @@ module Effective
       @order = resource.order
 
       to = EffectiveOrders.qb_online_sync_error_recipients.presence || EffectiveOrders.mailer_admin
+      cc = EffectiveQbOnline.sync_error_cc_recipients.presence
+
       subject = subject_for(__method__, "Quickbooks Sync Error - Order ##{@order.to_param}", resource, opts)
       headers = headers_for(resource, opts)
 
-      mail(to: to, subject: subject, **headers)
+      mail(to: to, cc: cc, subject: subject, **headers)
     end
 
   end
