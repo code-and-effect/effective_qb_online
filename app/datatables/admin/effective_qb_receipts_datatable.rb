@@ -3,7 +3,6 @@ module Admin
     datatable do
       order :updated_at
 
-      col :updated_at, visible: false
       col :created_at, visible: false
       col :id, visible: false
 

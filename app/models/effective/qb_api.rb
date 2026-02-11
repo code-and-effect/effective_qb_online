@@ -36,7 +36,7 @@ module Effective
         line3: address.try(:address3),
         city: address.city,
         country: address.country,
-        country_sub_division_code: address.country_code,
+        country_sub_division_code: address.state_code,
         postal_code: address.postal_code
       )
     end
@@ -185,7 +185,7 @@ module Effective
         [rate.rate_value.to_s, code] if rate && (exempt.blank? || rate.rate_value.to_f > 0.0)
       end
 
-      (Array(exempt) + tax_codes.uniq { |key, _| key }.compact).to_h
+      (Array(exempt) + tax_codes.compact.uniq { |key, _| key }).to_h
     end
 
     def with_service(name, &block)

@@ -114,7 +114,7 @@ module Effective
       end
 
       # Add Credit Card Surcharge if we collect it ourselves. This does not add a Helcim Convenience Fee
-      if EffectiveOrders.try(:credit_card_surcharge_qb_item_name).present? && order.try(:surcharge).to_i != 0
+      if !EffectiveOrders.try(:fee_saver?) && EffectiveOrders.try(:credit_card_surcharge_qb_item_name).present? && order.try(:surcharge).to_i != 0
         raise("Expected a Credit Card Surcharge QuickBooks item to exist for Effective::Order #{order.id} with non-zero surcharge amount. Please check your configuration.") unless surcharge_item.present?
 
         line_item = Quickbooks::Model::Line.new(amount: api.price_to_amount(order.surcharge), description: 'Credit Card Surcharge')
@@ -130,14 +130,32 @@ module Effective
         sales_receipt.line_items << line_item
       end
 
+      # Add negative Convenience Fee line item when Helcim fee saver is enabled
+      # The payment processor adds the convenience fee, so we record a negative amount to offset it in QuickBooks
+      if EffectiveOrders.try(:fee_saver?) && EffectiveOrders.try(:credit_card_surcharge_qb_item_name).present? && order.try(:surcharge).to_i != 0
+        raise("Expected a Credit Card Surcharge QuickBooks item to exist for Effective::Order #{order.id} with non-zero surcharge amount. Please check your configuration.") unless surcharge_item.present?
+
+        amount = api.price_to_amount(order.surcharge * -1)
+
+        line_item = Quickbooks::Model::Line.new(amount: amount, description: 'Helcim Convenience Fee')
+
+        line_item.sales_item! do |line|
+          line.item_id = surcharge_item.id
+          line.tax_code_id = tax_exempt.id  # Convenience fee is not taxed
+
+          line.unit_price = amount
+          line.quantity = 1
+        end
+
+        sales_receipt.line_items << line_item
+      end
+
       # Double check
       raise("Invalid SalesReceipt generated for Effective::Order #{order.id}") unless sales_receipt.valid?
 
       # Return a Quickbooks::Model::SalesReceipt that is ready to create
       sales_receipt
     end
-
-    private
 
     def self.scrub(value)
       value.to_s.downcase.strip
