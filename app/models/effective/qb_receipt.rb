@@ -74,7 +74,7 @@ module Effective
         end
 
         if EffectiveOrders.try(:credit_card_surcharge_qb_item_name).present? && EffectiveOrders.try(:fee_saver?)
-          if (expected = api.price_to_amount(order.amount_owing - order.surcharge.to_i)) != sales_receipt.total
+          if (expected = api.price_to_amount(order.amount_owing + order.surcharge.to_i)) != sales_receipt.total
             raise("A QuickBooks Online Sales Receipt has been created with an unexpected total. QuickBooks total is #{sales_receipt.total} but we expected #{expected}. Please adjust the Sales Receipt on QuickBooks")
           end
         end

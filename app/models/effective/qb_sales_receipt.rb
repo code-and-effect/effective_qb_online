@@ -135,7 +135,7 @@ module Effective
       if EffectiveOrders.try(:fee_saver?) && EffectiveOrders.try(:credit_card_surcharge_qb_item_name).present? && order.try(:surcharge).to_i != 0
         raise("Expected a Credit Card Surcharge QuickBooks item to exist for Effective::Order #{order.id} with non-zero surcharge amount. Please check your configuration.") unless surcharge_item.present?
 
-        amount = api.price_to_amount(order.surcharge * -1)
+        amount = api.price_to_amount(order.surcharge)
 
         line_item = Quickbooks::Model::Line.new(amount: amount, description: 'Helcim Convenience Fee')
 
