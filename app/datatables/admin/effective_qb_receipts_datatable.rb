@@ -33,6 +33,10 @@ module Admin
         end.join.html_safe
       end
 
+      col :payment_provider, search: EffectiveOrders.payment_providers, visible: false do |receipt|
+        receipt.order&.payment_provider
+      end
+
       actions_col
     end
 
