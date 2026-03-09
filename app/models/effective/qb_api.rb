@@ -51,7 +51,7 @@ module Effective
 
     # Singular
     def company_info
-      with_service('CompanyInfo') { |service| service.fetch_by_id(realm.realm_id) }
+      @company_info ||= with_service('CompanyInfo') { |service| service.fetch_by_id(realm.realm_id) }
     end
 
     def accounts
@@ -195,18 +195,35 @@ module Effective
 
       with_authenticated_request do |access_token|
         service = klass.new(company_id: realm.realm_id, access_token: access_token)
+
+        # quickbooks-ruby's rebuild_connection! creates a new Faraday connection
+        # on every service call with no timeouts. Reuse a single connection with
+        # timeouts so all calls share one TCP connection via HTTP keep-alive.
+        service.oauth.client.connection = faraday_connection
+
         yield(service)
       end
     end
 
     private
 
+    def faraday_connection
+      @faraday_connection ||= Faraday.new do |faraday|
+        faraday.request :multipart
+        faraday.request :gzip
+        faraday.request :url_encoded
+        faraday.options.open_timeout = 10
+        faraday.options.timeout = 30
+        faraday.adapter Quickbooks.http_adapter
+      end
+    end
+
     def with_authenticated_request(max_attempts: 3, &block)
       attempts = 0
 
       begin
-        token = OAuth2::AccessToken.new(EffectiveQbOnline.oauth2_client, realm.access_token, refresh_token: realm.refresh_token)
-        yield(token)
+        @access_token ||= OAuth2::AccessToken.new(EffectiveQbOnline.oauth2_client, realm.access_token, refresh_token: realm.refresh_token)
+        yield(@access_token)
       rescue OAuth2::Error, Quickbooks::AuthorizationFailure => e
         puts "QuickBooks OAuth Error: #{e.message}"
 
@@ -214,7 +231,8 @@ module Effective
         raise "unable to refresh QuickBooks OAuth2 token" if attempts >= max_attempts
 
         # Refresh
-        refreshed = token.refresh!
+        refreshed = @access_token.refresh!
+        @access_token = nil  # Clear memoized token so it's rebuilt with new credentials
 
         realm.update!(
           access_token: refreshed.token,
