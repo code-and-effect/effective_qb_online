@@ -51,11 +51,11 @@ module Effective
 
     # Singular
     def company_info
-      with_service('CompanyInfo') { |service| service.fetch_by_id(realm.realm_id) }
+      @company_info ||= with_service('CompanyInfo') { |service| service.fetch_by_id(realm.realm_id) }
     end
 
     def accounts
-      with_service('Account') { |service| service.all }
+      @accounts ||= with_service('Account') { |service| service.all }
     end
 
     # Only accounts we can use for the Deposit to Account setting
@@ -68,7 +68,7 @@ module Effective
     end
 
     def items
-      with_service('Item') { |service| service.all }
+      @items ||= with_service('Item') { |service| service.all }
     end
 
     def items_collection
@@ -90,7 +90,7 @@ module Effective
     end
 
     def payment_methods
-      with_service('PaymentMethod') { |service| service.all }
+      @payment_methods ||= with_service('PaymentMethod') { |service| service.all }
     end
 
     def payment_methods_collection
@@ -154,38 +154,40 @@ module Effective
     end
 
     def tax_codes
-      with_service('TaxCode') { |service| service.all }
+      @tax_codes ||= with_service('TaxCode') { |service| service.all }
     end
 
     def tax_rates
-      with_service('TaxRate') { |service| service.all }
+      @tax_rates ||= with_service('TaxRate') { |service| service.all }
     end
 
     # Returns a Hash of BigDecimal.to_s String Tax Rate => TaxCode Object
     # { '0.0' => 'Quickbooks::Model::TaxCode(Exempt)', '5.0' => 'Quickbooks::Model::TaxCode(GST)' }
     def taxes_collection
-      rates = tax_rates()
-      codes = tax_codes()
+      @taxes_collection ||= begin
+        rates = tax_rates()
+        codes = tax_codes()
 
-      # Find Exempt 0.0
-      exempt = codes.find do |code|
-        rate_id = code.sales_tax_rate_list.tax_rate_detail.first&.tax_rate_ref&.value
-        rate = rates.find { |rate| rate.id == rate_id } if rate_id
+        # Find Exempt 0.0
+        exempt = codes.find do |code|
+          rate_id = code.sales_tax_rate_list.tax_rate_detail.first&.tax_rate_ref&.value
+          rate = rates.find { |rate| rate.id == rate_id } if rate_id
 
-        code.name.downcase.include?('exempt') && rate && rate.rate_value == 0.0
+          code.name.downcase.include?('exempt') && rate && rate.rate_value == 0.0
+        end
+
+        exempt = [['0.0', exempt]] if exempt.present?
+
+        # Find The rest
+        tax_codes = codes.select(&:active?).map do |code|
+          rate_id = code.sales_tax_rate_list.tax_rate_detail.first&.tax_rate_ref&.value
+          rate = rates.find { |rate| rate.id == rate_id } if rate_id
+
+          [rate.rate_value.to_s, code] if rate && (exempt.blank? || rate.rate_value.to_f > 0.0)
+        end
+
+        (Array(exempt) + tax_codes.compact.uniq { |key, _| key }).to_h
       end
-
-      exempt = [['0.0', exempt]] if exempt.present?
-
-      # Find The rest
-      tax_codes = codes.select(&:active?).map do |code|
-        rate_id = code.sales_tax_rate_list.tax_rate_detail.first&.tax_rate_ref&.value
-        rate = rates.find { |rate| rate.id == rate_id } if rate_id
-
-        [rate.rate_value.to_s, code] if rate && (exempt.blank? || rate.rate_value.to_f > 0.0)
-      end
-
-      (Array(exempt) + tax_codes.compact.uniq { |key, _| key }).to_h
     end
 
     def with_service(name, &block)
@@ -193,18 +195,35 @@ module Effective
 
       with_authenticated_request do |access_token|
         service = klass.new(company_id: realm.realm_id, access_token: access_token)
+
+        # quickbooks-ruby's rebuild_connection! creates a new Faraday connection
+        # on every service call with no timeouts. Reuse a single connection with
+        # timeouts so all calls share one TCP connection via HTTP keep-alive.
+        service.oauth.client.connection = faraday_connection
+
         yield(service)
       end
     end
 
     private
 
+    def faraday_connection
+      @faraday_connection ||= Faraday.new do |faraday|
+        faraday.request :multipart
+        faraday.request :gzip
+        faraday.request :url_encoded
+        faraday.options.open_timeout = 10
+        faraday.options.timeout = 30
+        faraday.adapter Quickbooks.http_adapter
+      end
+    end
+
     def with_authenticated_request(max_attempts: 3, &block)
       attempts = 0
 
       begin
-        token = OAuth2::AccessToken.new(EffectiveQbOnline.oauth2_client, realm.access_token, refresh_token: realm.refresh_token)
-        yield(token)
+        @access_token ||= OAuth2::AccessToken.new(EffectiveQbOnline.oauth2_client, realm.access_token, refresh_token: realm.refresh_token)
+        yield(@access_token)
       rescue OAuth2::Error, Quickbooks::AuthorizationFailure => e
         puts "QuickBooks OAuth Error: #{e.message}"
 
@@ -212,7 +231,8 @@ module Effective
         raise "unable to refresh QuickBooks OAuth2 token" if attempts >= max_attempts
 
         # Refresh
-        refreshed = token.refresh!
+        refreshed = @access_token.refresh!
+        @access_token = nil  # Clear memoized token so it's rebuilt with new credentials
 
         realm.update!(
           access_token: refreshed.token,
