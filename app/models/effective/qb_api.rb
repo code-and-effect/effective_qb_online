@@ -212,9 +212,9 @@ module Effective
         faraday.request :multipart
         faraday.request :gzip
         faraday.request :url_encoded
-        faraday.options.open_timeout = 10
+        faraday.options.open_timeout = 30
         faraday.options.timeout = 30
-        faraday.adapter Quickbooks.http_adapter
+        faraday.adapter :net_http_persistent
       end
     end
 

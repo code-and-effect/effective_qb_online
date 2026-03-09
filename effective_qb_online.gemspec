@@ -18,6 +18,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'rails', '>= 6.0.0'
   spec.add_dependency 'quickbooks-ruby'
+  spec.add_dependency 'faraday-net_http_persistent'
   spec.add_dependency 'effective_bootstrap'
   spec.add_dependency 'effective_datatables'
   spec.add_dependency 'effective_orders'
