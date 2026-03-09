@@ -55,7 +55,7 @@ module Effective
     end
 
     def accounts
-      with_service('Account') { |service| service.all }
+      @accounts ||= with_service('Account') { |service| service.all }
     end
 
     # Only accounts we can use for the Deposit to Account setting
@@ -68,7 +68,7 @@ module Effective
     end
 
     def items
-      with_service('Item') { |service| service.all }
+      @items ||= with_service('Item') { |service| service.all }
     end
 
     def items_collection
@@ -90,7 +90,7 @@ module Effective
     end
 
     def payment_methods
-      with_service('PaymentMethod') { |service| service.all }
+      @payment_methods ||= with_service('PaymentMethod') { |service| service.all }
     end
 
     def payment_methods_collection
@@ -154,38 +154,40 @@ module Effective
     end
 
     def tax_codes
-      with_service('TaxCode') { |service| service.all }
+      @tax_codes ||= with_service('TaxCode') { |service| service.all }
     end
 
     def tax_rates
-      with_service('TaxRate') { |service| service.all }
+      @tax_rates ||= with_service('TaxRate') { |service| service.all }
     end
 
     # Returns a Hash of BigDecimal.to_s String Tax Rate => TaxCode Object
     # { '0.0' => 'Quickbooks::Model::TaxCode(Exempt)', '5.0' => 'Quickbooks::Model::TaxCode(GST)' }
     def taxes_collection
-      rates = tax_rates()
-      codes = tax_codes()
+      @taxes_collection ||= begin
+        rates = tax_rates()
+        codes = tax_codes()
 
-      # Find Exempt 0.0
-      exempt = codes.find do |code|
-        rate_id = code.sales_tax_rate_list.tax_rate_detail.first&.tax_rate_ref&.value
-        rate = rates.find { |rate| rate.id == rate_id } if rate_id
+        # Find Exempt 0.0
+        exempt = codes.find do |code|
+          rate_id = code.sales_tax_rate_list.tax_rate_detail.first&.tax_rate_ref&.value
+          rate = rates.find { |rate| rate.id == rate_id } if rate_id
 
-        code.name.downcase.include?('exempt') && rate && rate.rate_value == 0.0
+          code.name.downcase.include?('exempt') && rate && rate.rate_value == 0.0
+        end
+
+        exempt = [['0.0', exempt]] if exempt.present?
+
+        # Find The rest
+        tax_codes = codes.select(&:active?).map do |code|
+          rate_id = code.sales_tax_rate_list.tax_rate_detail.first&.tax_rate_ref&.value
+          rate = rates.find { |rate| rate.id == rate_id } if rate_id
+
+          [rate.rate_value.to_s, code] if rate && (exempt.blank? || rate.rate_value.to_f > 0.0)
+        end
+
+        (Array(exempt) + tax_codes.compact.uniq { |key, _| key }).to_h
       end
-
-      exempt = [['0.0', exempt]] if exempt.present?
-
-      # Find The rest
-      tax_codes = codes.select(&:active?).map do |code|
-        rate_id = code.sales_tax_rate_list.tax_rate_detail.first&.tax_rate_ref&.value
-        rate = rates.find { |rate| rate.id == rate_id } if rate_id
-
-        [rate.rate_value.to_s, code] if rate && (exempt.blank? || rate.rate_value.to_f > 0.0)
-      end
-
-      (Array(exempt) + tax_codes.compact.uniq { |key, _| key }).to_h
     end
 
     def with_service(name, &block)
