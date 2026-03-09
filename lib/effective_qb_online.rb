@@ -1,4 +1,5 @@
 require 'quickbooks-ruby'
+require 'faraday/net_http_persistent'
 require 'effective_resources'
 require 'effective_datatables'
 require 'effective_qb_online/engine'
