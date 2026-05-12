@@ -98,13 +98,20 @@ module Effective
       tax_code = taxes[order.tax_rate.to_s]
       tax_exempt = taxes['0.0']
 
+      # CRA: a discount inherits the tax status of the supply it reduces.
+      # When a negative-priced item is present alongside a tax-exempt positive item,
+      # treat the discount as tax-exempt so the SalesReceipt total aligns with the order total.
+      discount_against_exempt = receipt.qb_receipt_items.any? { |item| item.order_item.tax_exempt? && item.order_item.subtotal.to_i > 0 }
+
       receipt.qb_receipt_items.each do |receipt_item|
         order_item = receipt_item.order_item
         line_item = Quickbooks::Model::Line.new(amount: api.price_to_amount(order_item.subtotal), description: order_item.name)
 
+        line_tax_exempt = order_item.tax_exempt? || (order_item.subtotal.to_i < 0 && discount_against_exempt)
+
         line_item.sales_item! do |line|
           line.item_id = receipt_item.item_id
-          line.tax_code_id = (order_item.tax_exempt? ? tax_exempt.id : tax_code.id)
+          line.tax_code_id = (line_tax_exempt ? tax_exempt.id : tax_code.id)
 
           line.unit_price = api.price_to_amount(order_item.price)
           line.quantity = order_item.quantity

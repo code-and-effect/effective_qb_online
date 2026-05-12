@@ -81,4 +81,63 @@ class QbSalesReceiptTest < ActiveSupport::TestCase
     assert_equal (order.tax / 100.0).round(2), sales_receipt.txn_tax_detail.total_tax
   end
 
+  # CRA: a discount inherits the tax status of the supply it reduces.
+  # When a negative-priced item sits alongside a tax-exempt positive item,
+  # the discount must be sent as tax-exempt so QB's computed total matches the order total.
+  test 'negative-priced item adopts tax_exempt code when a tax-exempt positive item is present' do
+    api = EffectiveQbOnline.api
+    items = api.items().reject { |item| item.type == 'Category' }
+
+    prorated = create_effective_product!
+    prorated.update!(name: 'Prorated Fee', price: 325_00, tax_exempt: true, qb_item_name: items.sample.name)
+
+    discount = create_effective_product!
+    discount.update!(name: 'Discount Fee', price: -50_00, tax_exempt: false, qb_item_name: items.sample.name)
+
+    order = build_effective_order(items: [prorated, discount])
+    order.save!
+    order.mark_as_purchased!
+
+    receipt = Effective::QbReceipt.create_from_order!(order)
+    sales_receipt = Effective::QbSalesReceipt.build_from_receipt!(receipt, api: api)
+
+    taxes = api.taxes_collection
+    tax_exempt = taxes['0.0']
+
+    prorated_line = sales_receipt.line_items.find { |line| line.description == 'Prorated Fee' }
+    discount_line = sales_receipt.line_items.find { |line| line.description == 'Discount Fee' }
+
+    assert_equal tax_exempt.id, prorated_line.sales_item_line_detail.tax_code_ref.value
+    assert_equal tax_exempt.id, discount_line.sales_item_line_detail.tax_code_ref.value, 'expected negative line to adopt tax_exempt code'
+  end
+
+  # Existing behavior preserved: a discount against a fully taxable order keeps the regular tax code,
+  # so QB receives the correct negative tax credit per CRA.
+  test 'negative-priced item keeps regular tax code when no tax-exempt positive item is present' do
+    api = EffectiveQbOnline.api
+    items = api.items().reject { |item| item.type == 'Category' }
+
+    taxable = create_effective_product!
+    taxable.update!(name: 'Taxable Fee', price: 325_00, tax_exempt: false, qb_item_name: items.sample.name)
+
+    discount = create_effective_product!
+    discount.update!(name: 'Taxable Discount', price: -50_00, tax_exempt: false, qb_item_name: items.sample.name)
+
+    order = build_effective_order(items: [taxable, discount])
+    order.save!
+    order.mark_as_purchased!
+
+    receipt = Effective::QbReceipt.create_from_order!(order)
+    sales_receipt = Effective::QbSalesReceipt.build_from_receipt!(receipt, api: api)
+
+    taxes = api.taxes_collection
+    tax_code = taxes[order.tax_rate.to_s]
+
+    taxable_line = sales_receipt.line_items.find { |line| line.description == 'Taxable Fee' }
+    discount_line = sales_receipt.line_items.find { |line| line.description == 'Taxable Discount' }
+
+    assert_equal tax_code.id, taxable_line.sales_item_line_detail.tax_code_ref.value
+    assert_equal tax_code.id, discount_line.sales_item_line_detail.tax_code_ref.value, 'expected negative line to keep regular tax code on fully taxable order'
+  end
+
 end
