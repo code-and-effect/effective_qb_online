@@ -71,7 +71,12 @@ module EffectiveQbOnline
 
     qb_item_names.each do |name|
       item_name = Effective::ItemName.where(name: name).first_or_initialize
-      item_name.new_record? ? item_name.save! : item_name.unarchive!
+
+      if item_name.new_record?
+        item_name.save!
+      elsif item_name.archived?
+        item_name.unarchive!
+      end
     end
 
     Effective::ItemName.unarchived.where.not(name: qb_item_names).find_each do |item_name|
