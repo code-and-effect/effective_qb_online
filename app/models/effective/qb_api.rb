@@ -81,7 +81,7 @@ module Effective
 
     # Array of strings
     def item_names
-      items.values.flatten(1).map(&:first).map(&:to_s).reject(&:blank?).uniq.sort
+      items_collection.values.flatten(1).map(&:first).map(&:to_s).reject(&:blank?).uniq.sort
     end
 
     def item_html(item)

@@ -22,7 +22,6 @@ EffectiveQbOnline::Engine.routes.draw do
 
     get '/quickbooks', to: 'qb_online#index', as: :quickbooks
     get '/quickbooks/items', to: 'qb_online#items', as: :quickbooks_items
-    post '/quickbooks/sync_item_names', to: 'qb_online#sync_item_names', as: :quickbooks_sync_item_names
   end
 
 end
