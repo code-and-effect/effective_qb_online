@@ -1,11 +1,12 @@
 PATH
   remote: .
   specs:
-    effective_qb_online (0.9.3)
+    effective_qb_online (0.9.7)
       effective_bootstrap
       effective_datatables
       effective_orders
       effective_resources
+      faraday-net_http_persistent
       quickbooks-ruby
       rails (>= 6.0.0)
 
@@ -195,6 +196,9 @@ GEM
       multipart-post (~> 2.0)
     faraday-net_http (3.4.2)
       net-http (~> 0.5)
+    faraday-net_http_persistent (2.3.1)
+      faraday (~> 2.5)
+      net-http-persistent (>= 4.0.4, < 5)
     ffi (1.17.3-aarch64-linux-gnu)
     ffi (1.17.3-aarch64-linux-musl)
     ffi (1.17.3-arm-linux-gnu)
@@ -445,7 +449,6 @@ DEPENDENCIES
   effective_test_bot
   haml-rails
   pry-byebug
-  psych
   sqlite3
   wicked
 

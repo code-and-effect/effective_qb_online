@@ -79,6 +79,11 @@ module Effective
         .group_by(&:last)
     end
 
+    # Array of strings
+    def item_names
+      items.values.flatten(1).map(&:first).map(&:to_s).reject(&:blank?).uniq.sort
+    end
+
     def item_html(item)
       details = [
         ("##{item.id}"),

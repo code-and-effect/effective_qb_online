@@ -61,4 +61,23 @@ module EffectiveQbOnline
     qb_receipt.skip!
   end
 
+  # Syncs the QuickBooks Online item names down into Effective::ItemName
+  def self.sync_item_names!
+    client = api()
+    raise 'expected a connected QuickBooks Online realm' if client.blank?
+
+    qb_item_names = client.item_names
+    raise 'QuickBooks Online returned no items' if qb_item_names.blank?
+
+    qb_item_names.each do |name|
+      item_name = Effective::ItemName.where(name: name).first_or_initialize
+      item_name.new_record? ? item_name.save! : item_name.unarchive!
+    end
+
+    Effective::ItemName.unarchived.where.not(name: qb_item_names).find_each do |item_name|
+      item_name.archive!
+    end
+
+    true
+  end
 end
