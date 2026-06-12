@@ -19,7 +19,7 @@ module Effective
     end
 
     def order_item_qb_name
-      item_id || order_item.purchasable.try(:qb_item_id) || order_item.purchasable.try(:qb_item_name)
+      item_id.presence || order_item.purchasable.try(:qb_item_id) || order_item.purchasable.try(:qb_item_name)
     end
 
   end
