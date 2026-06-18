@@ -12,7 +12,7 @@
   = @order.billing_name
 %p
   - @order.order_items.each do |oi|
-    = "#{oi.name} (#{oi.try(:qb_item_name)})"
+    = oi.to_s.html_safe
     %br
 
 %p

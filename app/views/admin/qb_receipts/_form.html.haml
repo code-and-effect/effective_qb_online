@@ -28,7 +28,7 @@
         = f.fields_for :qb_receipt_items do |fi|
           %tr
             %td= fi.object.order_item_id
-            %td= fi.object.order_item
+            %td= fi.object.order_item.to_s.html_safe
             %td
               - if fi.object.item_id.present?
                 - existing = items.find { |(name, id)| id == fi.object.item_id }&.first

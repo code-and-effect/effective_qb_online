@@ -100,7 +100,7 @@ module Effective
 
       receipt.qb_receipt_items.each do |receipt_item|
         order_item = receipt_item.order_item
-        line_item = Quickbooks::Model::Line.new(amount: api.price_to_amount(order_item.subtotal), description: order_item.name)
+        line_item = Quickbooks::Model::Line.new(amount: api.price_to_amount(order_item.subtotal), description: strip_html(order_item.name))
 
         line_item.sales_item! do |line|
           line.item_id = receipt_item.item_id
@@ -159,6 +159,16 @@ module Effective
 
     def self.scrub(value)
       value.to_s.downcase.strip
+    end
+
+    # Order item names may contain HTML (e.g. an EventRegistrant's "Member" badge).
+    # QuickBooks line item descriptions are plain text, so strip the markup while keeping
+    # the badge text. Convert line breaks to spaces first so adjacent text doesn't run together.
+    def self.strip_html(value)
+      return value if value.blank?
+
+      text = value.to_s.gsub(/<br\s*\/?>/i, ' ')
+      ActionView::Base.full_sanitizer.sanitize(text).squish
     end
 
   end
