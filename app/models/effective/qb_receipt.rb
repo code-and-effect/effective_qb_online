@@ -66,6 +66,12 @@ module Effective
         sales_receipt = Effective::QbSalesReceipt.build_from_receipt!(self, api: api)
         sales_receipt = api.create_sales_receipt(sales_receipt: sales_receipt)
 
+        # The SalesReceipt now exists in QuickBooks. Persist its id immediately so a
+        # later failure (e.g. the total sanity checks below) doesn't orphan it. Without
+        # this, a re-sync would try to create it again and QuickBooks rejects the
+        # reused DocNumber with a Duplicate Document Number Error.
+        update_column(:sales_receipt_id, sales_receipt.id)
+
         # Sanity check
         if EffectiveOrders.try(:credit_card_surcharge_qb_item_name).present? && !EffectiveOrders.try(:fee_saver?)
           if (expected = api.price_to_amount(order.total)) != sales_receipt.total
