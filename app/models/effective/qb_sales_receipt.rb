@@ -38,8 +38,11 @@ module Effective
       end
 
       receipt.qb_receipt_items.each do |receipt_item|
+        # The purchasable may have been deleted. When it's missing we can't auto-match
+        # the QuickBooks item from its qb_item_id/qb_item_name, so we fall back to the
+        # QbReceiptItem's item_id (mapped manually in the admin). The SalesReceipt line
+        # items are built from the OrderItem, so a missing purchasable is not fatal.
         purchasable = receipt_item.order_item.purchasable
-        raise("Expected a purchasable for Effective::OrderItem #{receipt_item.order_item.id}") unless purchasable.present?
 
         # Either of these could match
         purchasable_id_name = [
@@ -59,7 +62,7 @@ module Effective
 
         if item.blank?
           purchasable_id_name = [purchasable.try(:qb_item_id), purchasable.try(:qb_item_name)].compact
-          raise("Unknown Item #{purchasable_id_name.join(' or ')} from #{purchasable} (#{purchasable.class.name} ##{purchasable.id})")
+          raise("Unknown Item #{purchasable_id_name.join(' or ')} from #{purchasable} (#{purchasable.class.name} ##{purchasable&.id})")
         end
 
         receipt_item.update!(item_id: item.id)
