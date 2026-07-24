@@ -165,13 +165,14 @@ module Effective
     end
 
     # Order item names may contain HTML (e.g. an EventRegistrant's "Member" badge).
-    # QuickBooks line item descriptions are plain text, so strip the markup while keeping
-    # the badge text. Convert line breaks to spaces first so adjacent text doesn't run together.
+    # QuickBooks line item descriptions are plain text, so strip the markup while keeping the badge text.
+    # <br> and &nbsp; carry spacing, so they become spaces rather than being dropped or passed through.
+    # The sanitizer re-encodes as it strips, so unescape after or a title with an & syncs as &amp;
     def self.strip_html(value)
       return value if value.blank?
 
-      text = value.to_s.gsub(/<br\s*\/?>/i, ' ')
-      ActionView::Base.full_sanitizer.sanitize(text).squish
+      text = ActionView::Base.full_sanitizer.sanitize(value.to_s.gsub(/<br\s*\/?>/i, ' '))
+      CGI.unescapeHTML(text.gsub('&nbsp;', ' ')).squish
     end
 
   end

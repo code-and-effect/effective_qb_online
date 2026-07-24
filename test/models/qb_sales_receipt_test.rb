@@ -81,4 +81,25 @@ class QbSalesReceiptTest < ActiveSupport::TestCase
     assert_equal (order.tax / 100.0).round(2), sales_receipt.txn_tax_detail.total_tax
   end
 
+  test 'strip_html' do
+    # Tags are removed and the text they wrap is kept
+    assert_equal 'Ticket A - John Doe Member', Effective::QbSalesReceipt.strip_html('Ticket A - John Doe<br><span class="badge badge-warning">Member</span>')
+    assert_equal 'Name org a@b.com', Effective::QbSalesReceipt.strip_html('Name<br/><small>org</small><br/><small>a@b.com</small>')
+
+    # Entities are decoded rather than passed through or introduced
+    assert_equal 'Smith & Co', Effective::QbSalesReceipt.strip_html('Smith &amp; Co')
+    assert_equal 'Smith & Co', Effective::QbSalesReceipt.strip_html('Smith & Co')
+    assert_equal "Ticket 'A'", Effective::QbSalesReceipt.strip_html('Ticket &#39;A&#39;')
+
+    # Non-breaking spaces become regular spaces, named and numeric
+    assert_equal 'Renewal Fee 2026', Effective::QbSalesReceipt.strip_html('Renewal Fee&nbsp;2026')
+    assert_equal 'Renewal Fee 2026', Effective::QbSalesReceipt.strip_html('Renewal Fee&#160;2026')
+    assert_equal 'Renewal Fee 2026', Effective::QbSalesReceipt.strip_html("Renewal Fee\u00A02026")
+
+    # Plain text and blanks are left alone
+    assert_equal 'Plain text item', Effective::QbSalesReceipt.strip_html('Plain text item')
+    assert_nil Effective::QbSalesReceipt.strip_html(nil)
+    assert_equal '', Effective::QbSalesReceipt.strip_html('')
+  end
+
 end
