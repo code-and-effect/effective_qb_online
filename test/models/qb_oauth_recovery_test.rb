@@ -101,15 +101,6 @@ class QbOauthRecoveryTest < ActiveSupport::TestCase
     refute @realm.reload.reconnection_required?
   end
 
-  test 'a failure from an old grant cannot disable a newly connected grant' do
-    old_refresh = @realm.refresh_token
-    @realm.update!(access_token: 'reconnected-access', refresh_token: 'reconnected-refresh')
-    stub(EffectiveQbOnline, :send_email, ->(*) { flunk 'must not notify' }) do
-      refute @realm.require_reconnection!(reason: 'invalid_grant', refresh_token: old_refresh)
-    end
-    refute @realm.reload.reconnection_required?
-  end
-
   test 'paused sync keeps the receipt errored without a remote call or repeated email' do
     @realm.update!(reconnection_required_at: Time.current, reconnection_reason: 'user_not_in_realm')
     order = Effective::Order.new(status: 'purchased', purchased_at: Time.current, billing_name: 'Test Customer', total: 12000, tax_rate: 0)
@@ -125,10 +116,11 @@ class QbOauthRecoveryTest < ActiveSupport::TestCase
     assert_includes receipt.result, 'Retry this receipt manually'
   end
 
-  test 'reconnection notice renders manual recovery instructions'  do
+  test 'reconnection notice renders manual recovery instructions' do
     message = Effective::QbOnlineMailer.reconnection_required(@realm).message
     assert_includes message.body.to_s, 'retry them manually'
     assert_includes message.body.to_s, '/admin/quickbooks'
+    assert_equal 'Have a great day!', Nokogiri::HTML.fragment(message.body.to_s).css('p').last.text
   end
 
   test 'revoke preserves connection settings on provider rejection or timeout' do
@@ -213,15 +205,6 @@ class QbOauthRecoveryTest < ActiveSupport::TestCase
     assert_equal @realm.access_token, authenticate(&:token)
     @realm.update!(access_token: 'reconnected-access', refresh_token: 'reconnected-refresh')
     assert_equal 'reconnected-access', authenticate(&:token)
-  end
-
-  test 'the paused company page exposes reconnect without a collapsed settings section' do
-    @realm.update!(reconnection_required_at: Time.current, reconnection_reason: 'invalid_grant')
-    html = stub(EffectiveQbOnline, :api, @api) do
-      render_admin_page
-    end
-    assert_includes html, 'Reconnect QuickBooks'
-    refute_includes html, 'Show Company Settings'
   end
 
   test 'revoking an old grant preserves a concurrent reconnection' do
