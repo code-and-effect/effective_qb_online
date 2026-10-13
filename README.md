@@ -94,3 +94,41 @@ rails test
 4. Push to the branch (`git push origin my-new-feature`)
 5. Bonus points for test coverage
 6. Create new Pull Request
+
+## OAuth recovery (0.9.12)
+
+Existing installations must copy `db/migrate/20261013140000_upgrade_effective_qb_online_zero_nine_twelve.rb`
+into the host application's migrations and migrate before loading 0.9.12. New installations receive
+these columns through the install generator. Keep the existing company account settings when reconnecting.
+
+A terminal `invalid_grant` during refresh records a reconnection-required state and sends one
+notice to the configured QuickBooks sync error recipients (falling back to the orders admin).
+Subsequent API attempts stop locally until an administrator reconnects. Other errors, including
+network timeouts, throttling, provider outages, and invalid client configuration, retain their
+normal error handling. Errored receipts remain available for manual admin retry; reconnection
+never retries them automatically.
+
+OAuth clients are isolated per request/API instance. Revocation uses the OAuth2 client's
+`revoke_token` API with client Basic authentication and a JSON body at Intuit's absolute endpoint.
+Refreshes serialize token rotation and store the provider's refresh-token lifetime when supplied.
+Authorization callbacks validate and consume the session's OAuth state.
+
+References:
+
+- [Intuit OAuth 2.0 developer documentation](https://developer.intuit.com/app/developer/qbo/docs/develop/authentication-and-authorization/oauth-2.0)
+- [Intuit production discovery document](https://developer.intuit.com/.well-known/openid_configuration)
+- [Intuit OAuth SDK request formats](https://github.com/intuit/oauth-jsclient/blob/master/src/OAuthClient.js)
+- [OAuth2 client API](https://github.com/ruby-oauth/oauth2/blob/v2.0.25/lib/oauth2/client.rb)
+
+The QuickBooks/OAuth transport dependencies are tested with quickbooks-ruby 2.0.7,
+oauth2 2.0.25, Faraday 2.14.4, faraday-gzip 3.2.0, faraday-net_http_persistent 2.3.1,
+and net-http-persistent 4.0.8. Only this dependency group was updated.
+
+Offline recovery checks (no Intuit credentials or network calls required):
+
+```console
+RAILS_ENV=test mise exec -- bin/rails db:migrate
+mise exec -- bin/rails test test/models/qb_oauth_recovery_test.rb
+```
+
+The older sandbox API tests require live sandbox credentials; do not use production credentials.

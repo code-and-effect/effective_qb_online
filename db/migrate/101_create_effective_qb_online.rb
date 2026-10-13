@@ -14,6 +14,9 @@ class CreateEffectiveQbOnline < ActiveRecord::Migration[6.0]
 
       t.boolean :order_number_as_transaction_number, default: false
 
+      t.datetime :reconnection_required_at
+      t.string :reconnection_reason
+
       t.timestamps
     end
 

@@ -10,10 +10,11 @@ module Effective
     before_action { EffectiveResources.authorize!(self, :admin, :effective_qb_online) }
 
     def authorize
+      session[:qb_oauth_state] = SecureRandom.hex(24)
       grant_url = client.auth_code.authorize_url(
         redirect_uri: redirect_uri,
         response_type: 'code',
-        state: SecureRandom.hex(12),
+        state: session[:qb_oauth_state],
         scope: 'com.intuit.quickbooks.accounting'
       )
 
@@ -22,7 +23,16 @@ module Effective
 
     # This matches the QuickBooks Redirect URI and we have to set it up ahead of time.
     def callback
-      return unless params[:code].present? && params[:realmId].present? && params[:state].present?
+      expected_state = session.delete(:qb_oauth_state)
+      unless expected_state.present? && params[:state].present? && ActiveSupport::SecurityUtils.secure_compare(expected_state, params[:state].to_s)
+        flash[:danger] = 'Invalid QuickBooks authorization response. Please start the connection again.'
+        return redirect_to(effective_qb_online.admin_quickbooks_path)
+      end
+
+      unless params[:code].present? && params[:realmId].present?
+        flash[:danger] = 'QuickBooks authorization was not completed. Please try again.'
+        return redirect_to(effective_qb_online.admin_quickbooks_path)
+      end
 
       token = client.auth_code.get_token(params[:code], redirect_uri: redirect_uri)
       return unless token
@@ -34,7 +44,9 @@ module Effective
         access_token: token.token,
         refresh_token: token.refresh_token,
         access_token_expires_at: Time.at(token.expires_at),
-        refresh_token_expires_at: (Time.at(token.expires_at) + 100.days)
+        refresh_token_expires_at: Time.current + token.params.fetch('x_refresh_token_expires_in', 100.days).to_i.seconds,
+        reconnection_required_at: nil,
+        reconnection_reason: nil
       )
 
       flash[:success] = 'Successfully connected with QuickBooks Online'
@@ -43,23 +55,24 @@ module Effective
     end
 
     def revoke
-      realm = EffectiveQbOnline.api.realm
-      return unless realm
+      realm = Effective::QbRealm.first
 
-      # Instantiate the token
-      token = OAuth2::AccessToken.new(client, realm.access_token, refresh_token: realm.refresh_token)
-
-      # Revoke
-      response = token.post('/o/oauth2/revoke', params: { token: realm.refresh_token })
-
-      if response.status == 200
-        flash[:success] = 'Successfully revoked from QuickBooks Online'
+      if realm.blank?
+        flash[:success] = 'Already disconnected from QuickBooks Online'
+      elsif EffectiveQbOnline.revoke_token!(realm)
         realm.destroy!
+        flash[:success] = 'Successfully revoked from QuickBooks Online'
       else
-        flash[:danger] = 'Unable to revoke'
+        flash[:danger] = 'Unable to revoke QuickBooks access. Please try again or reconnect using a current company administrator.'
       end
 
-      redirect_to(effective_qb_online.admin_quickbooks_path, allow_other_host: true)
+      redirect_to(effective_qb_online.admin_quickbooks_path)
+    rescue OAuth2::Error
+      flash[:danger] = 'QuickBooks could not revoke access. Your connection settings have been preserved. Please reconnect or try again.'
+      redirect_to(effective_qb_online.admin_quickbooks_path)
+    rescue Faraday::Error
+      flash[:danger] = 'Unable to reach QuickBooks Online. Please try again.'
+      redirect_to(effective_qb_online.admin_quickbooks_path)
     end
 
     private

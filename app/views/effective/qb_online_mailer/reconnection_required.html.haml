@@ -1,0 +1,5 @@
+%p QuickBooks Online authorization is no longer valid for company #{@qb_realm.realm_id}.
+%p Sign in as a website administrator and reconnect using a current QuickBooks company administrator.
+%p Background QuickBooks requests are paused until reconnection. Company settings and receipts have been preserved.
+%p After reconnecting, review errored receipts and retry them manually.
+%p= link_to 'Reconnect QuickBooks Online', effective_qb_online.admin_quickbooks_url

@@ -223,31 +223,55 @@ module Effective
       end
     end
 
-    def with_authenticated_request(max_attempts: 3, &block)
+    def with_authenticated_request(max_attempts: 2)
       attempts = 0
 
       begin
+        realm.reload
+        if realm.reconnection_required?
+          raise EffectiveQbOnline::ReconnectionRequired, 'QuickBooks Online requires reconnection by a current company administrator. Retry this receipt manually after reconnecting.'
+        end
+
         @access_token ||= OAuth2::AccessToken.new(EffectiveQbOnline.oauth2_client, realm.access_token, refresh_token: realm.refresh_token)
         yield(@access_token)
-      rescue OAuth2::Error, Quickbooks::AuthorizationFailure => e
-        puts "QuickBooks OAuth Error: #{e.message}"
+      rescue OAuth2::Error, Quickbooks::AuthorizationFailure => error
+        # Only authentication failures justify refreshing. Other OAuth/API errors
+        # retain their original meaning and must not cause a token rotation.
+        raise unless error.kind_of?(Quickbooks::AuthorizationFailure) || error.response.status == 401
 
         attempts += 1
-        raise "unable to refresh QuickBooks OAuth2 token" if attempts >= max_attempts
+        raise if attempts >= max_attempts
 
-        # Refresh
+        refresh_access_token!
+        retry
+      end
+    end
+
+    def refresh_access_token!
+      attempted_refresh_token = @access_token.refresh_token
+
+      # Refresh tokens rotate. Reload under a lock so another worker's successful
+      # refresh is reused instead of overwritten with stale credentials.
+      realm.with_lock do
+        return if realm.reconnection_required?
+        return if realm.access_token != @access_token.token || realm.refresh_token != attempted_refresh_token
+
         refreshed = @access_token.refresh!
-        @access_token = nil  # Clear memoized token so it's rebuilt with new credentials
-
         realm.update!(
           access_token: refreshed.token,
           refresh_token: refreshed.refresh_token,
           access_token_expires_at: Time.at(refreshed.expires_at),
-          refresh_token_expires_at: (Time.at(refreshed.expires_at) + 100.days)
+          refresh_token_expires_at: Time.current + refreshed.params.fetch('x_refresh_token_expires_in', 100.days).to_i.seconds
         )
-
-        retry
       end
+    rescue OAuth2::Error => error
+      raise unless error.code == 'invalid_grant'
+
+      reason = error.response.parsed['x_error_reason'].presence || 'invalid_grant'
+      realm.require_reconnection!(reason: reason, refresh_token: attempted_refresh_token)
+      raise EffectiveQbOnline::ReconnectionRequired, 'QuickBooks Online authorization is no longer valid. Reconnect using a current company administrator, then retry errored receipts manually.'
+    ensure
+      @access_token = nil
     end
 
     def scrub(value, sql: false)
