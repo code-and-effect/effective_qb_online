@@ -103,6 +103,9 @@ these columns through the install generator. Keep the existing company account s
 
 A terminal `invalid_grant` during refresh records a reconnection-required state and sends one
 notice to the configured QuickBooks sync error recipients (falling back to the orders admin).
+Notification uses the shared mailer delivery/error handling and is best-effort: a delivery
+failure is reported, but does not unpause the connection or trigger repeated notices.
+The administrator page always exposes the recovery action while paused.
 Subsequent API attempts stop locally until an administrator reconnects. Other errors, including
 network timeouts, throttling, provider outages, and invalid client configuration, retain their
 normal error handling. Errored receipts remain available for manual admin retry; reconnection

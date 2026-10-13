@@ -181,6 +181,137 @@ class QbOauthRecoveryTest < ActiveSupport::TestCase
     assert_in_delta 7200, @realm.refresh_token_expires_at - Time.current, 5
   end
 
+  test 'reconnecting a different company is rejected before exchanging the code' do
+    @realm.update!(reconnection_required_at: Time.current, reconnection_reason: 'invalid_grant')
+    controller = controller_for
+    controller.session[:qb_oauth_state] = 'correct-state'
+    controller.params = ActionController::Parameters.new(code: 'code', realmId: 'wrong-company', state: 'correct-state')
+    stub(EffectiveQbOnline, :oauth2_client, -> { flunk 'must not exchange for another company' }) { controller.callback }
+    assert_equal 'realm', @realm.reload.realm_id
+    assert @realm.reconnection_required?
+    assert_equal 'account', @realm.deposit_to_account_id
+    assert_includes controller.flash[:danger], 'existing QuickBooks company'
+  end
+
+  test 'callback provider errors preserve existing credentials and allow another authorization attempt' do
+    @realm.update!(reconnection_required_at: Time.current, reconnection_reason: 'invalid_grant')
+    original_token = @realm.refresh_token
+    controller = controller_for
+    controller.session[:qb_oauth_state] = 'correct-state'
+    controller.params = ActionController::Parameters.new(code: 'code', realmId: @realm.realm_id, state: 'correct-state')
+    client = EffectiveQbOnline.oauth2_client
+    stub(client.auth_code, :get_token, ->(*) { raise Faraday::TimeoutError, 'timeout' }) do
+      stub(EffectiveQbOnline, :oauth2_client, client) { controller.callback }
+    end
+    assert_equal original_token, @realm.reload.refresh_token
+    assert @realm.reconnection_required?
+    assert controller.flash[:danger].present?
+    assert_nil controller.session[:qb_oauth_state]
+  end
+
+  test 'an existing API instance uses credentials from a later successful reconnection' do
+    assert_equal @realm.access_token, authenticate(&:token)
+    @realm.update!(access_token: 'reconnected-access', refresh_token: 'reconnected-refresh')
+    assert_equal 'reconnected-access', authenticate(&:token)
+  end
+
+  test 'the paused company page exposes reconnect without a collapsed settings section' do
+    @realm.update!(reconnection_required_at: Time.current, reconnection_reason: 'invalid_grant')
+    html = stub(EffectiveQbOnline, :api, @api) do
+      render_admin_page
+    end
+    assert_includes html, 'Reconnect QuickBooks'
+    refute_includes html, 'Show Company Settings'
+  end
+
+  test 'revoking an old grant preserves a concurrent reconnection' do
+    controller = controller_for
+    stub(EffectiveQbOnline, :revoke_token!, ->(realm) { Effective::QbRealm.find(realm.id).update!(access_token: 'new-access', refresh_token: 'new-refresh'); true }) do
+      controller.revoke
+    end
+    assert_equal 'new-refresh', @realm.reload.refresh_token
+    assert_includes controller.flash[:danger], 'newer connection has been preserved'
+  end
+
+  test 'the first failing admin page displays reconnect instructions immediately' do
+    error = oauth_error(400, 'invalid_grant', 'x_error_reason' => 'user_not_in_realm')
+    stub(@api, :company_info, -> { @api.send(:with_authenticated_request) { raise oauth_error(401, 'unauthorized') } }) do
+      stub(OAuth2::AccessToken, :new, failing_token(error)) do
+        stub(EffectiveQbOnline, :send_email, true) do
+          stub(EffectiveQbOnline, :api, @api) do
+            html = render_admin_page
+            assert_includes html, 'Reconnect QuickBooks'
+            refute_includes html, 'Show Company Settings'
+          end
+        end
+      end
+    end
+  end
+
+  test 'a concurrent disconnect while revoking returns an already disconnected response' do
+    controller = controller_for
+    stub(EffectiveQbOnline, :revoke_token!, ->(realm) { Effective::QbRealm.find(realm.id).destroy!; true }) { controller.revoke }
+    assert_equal 'Already disconnected from QuickBooks Online', controller.flash[:success]
+    assert_equal '/admin/quickbooks', controller.instance_variable_get(:@test_redirect)
+  end
+
+  test 'a concurrent disconnect during callback does not resurrect the old settings' do
+    controller = controller_for
+    controller.session[:qb_oauth_state] = 'correct-state'
+    controller.params = ActionController::Parameters.new(code: 'code', realmId: @realm.realm_id, state: 'correct-state')
+    token = OAuth2::AccessToken.new(EffectiveQbOnline.oauth2_client, 'new-access', refresh_token: 'new-refresh', expires_in: 3600)
+    client = EffectiveQbOnline.oauth2_client
+    stub(client.auth_code, :get_token, ->(*) { @realm.destroy!; token }) do
+      stub(EffectiveQbOnline, :oauth2_client, client) { controller.callback }
+    end
+    refute Effective::QbRealm.exists?(@realm.id)
+    assert controller.flash[:danger].present?
+  end
+
+  test 'a notification enqueue failure leaves the connection paused and is reported once' do
+    delivery = Object.new
+    delivery.define_singleton_method(:deliver_later) { raise Faraday::TimeoutError, 'enqueue failed' }
+    mailer = Object.new
+    mailer.define_singleton_method(:reconnection_required) { |_realm| delivery }
+    reports = []
+    stub(EffectiveQbOnline, :mailer_class, mailer) do
+      stub(EffectiveQbOnline, :deliver_method, :deliver_later) do
+        stub(Rails.env, :production?, true) do
+          stub(EffectiveResources, :send_error, ->(error, **) { reports << error }) do
+            assert @realm.require_reconnection!(reason: 'invalid_grant', refresh_token: @realm.refresh_token)
+            refute @realm.require_reconnection!(reason: 'invalid_grant', refresh_token: @realm.refresh_token)
+          end
+        end
+      end
+    end
+    assert @realm.reload.reconnection_required?
+    assert_equal 1, reports.length
+  end
+
+  test 'reconnection between refresh failure and state recording continues with the new grant' do
+    error = oauth_error(400, 'invalid_grant')
+    old_token = failing_token(error)
+    new_token = OAuth2::AccessToken.new(EffectiveQbOnline.oauth2_client, 'reconnected-access', refresh_token: 'reconnected-refresh')
+    require_reconnection = @realm.method(:require_reconnection!)
+    record_failure = ->(**options) do
+      Effective::QbRealm.find(@realm.id).update!(access_token: 'reconnected-access', refresh_token: 'reconnected-refresh')
+      require_reconnection.call(**options)
+    end
+    calls = 0
+    stub(@realm, :require_reconnection!, record_failure) do
+      stub(OAuth2::AccessToken, :new, ->(*, **) { calls += 1; calls == 1 ? old_token : new_token }) do
+        stub(EffectiveQbOnline, :send_email, ->(*) { flunk 'the new grant must not be marked invalid' }) do
+          result = authenticate do |token|
+            raise oauth_error(401, 'unauthorized') if token.token == old_token.token
+            token.token
+          end
+          assert_equal 'reconnected-access', result
+        end
+      end
+    end
+    refute @realm.reload.reconnection_required?
+  end
+
   private
 
   # Minitest 6 extracts its mocking helpers into a separate gem. Keep these
@@ -193,6 +324,15 @@ class QbOauthRecoveryTest < ActiveSupport::TestCase
     yield
   ensure
     object.define_singleton_method(name, original)
+  end
+
+  def render_admin_page
+    controller = Admin::QbOnlineController.new
+    controller.set_request!(ActionDispatch::TestRequest.create)
+    view = controller.view_context
+    # Receipt datatable state needs browser cookies; it is outside this view unit's scope.
+    view.define_singleton_method(:render_datatable) { |_datatable| '<table>Receipts</table>'.html_safe }
+    view.render(template: 'admin/qb_online/index')
   end
 
   def controller_for

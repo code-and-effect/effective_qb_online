@@ -232,6 +232,10 @@ module Effective
           raise EffectiveQbOnline::ReconnectionRequired, 'QuickBooks Online requires reconnection by a current company administrator. Retry this receipt manually after reconnecting.'
         end
 
+        if @access_token && (@access_token.token != realm.access_token || @access_token.refresh_token != realm.refresh_token)
+          @access_token = nil
+        end
+
         @access_token ||= OAuth2::AccessToken.new(EffectiveQbOnline.oauth2_client, realm.access_token, refresh_token: realm.refresh_token)
         yield(@access_token)
       rescue OAuth2::Error, Quickbooks::AuthorizationFailure => error
@@ -269,6 +273,8 @@ module Effective
 
       reason = error.response.parsed['x_error_reason'].presence || 'invalid_grant'
       realm.require_reconnection!(reason: reason, refresh_token: attempted_refresh_token)
+      return unless realm.reconnection_required?
+
       raise EffectiveQbOnline::ReconnectionRequired, 'QuickBooks Online authorization is no longer valid. Reconnect using a current company administrator, then retry errored receipts manually.'
     ensure
       @access_token = nil
