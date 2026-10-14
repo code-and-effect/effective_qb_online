@@ -1,6 +1,7 @@
 %h1.effective-admin-heading= @page_title
 
 - api = EffectiveQbOnline.api
+- api_error = api.api_error if api.present? && !api.realm.reconnection_required?
 
 - if api.blank?
   = card('Connect to QuickBooks Online') do
@@ -11,13 +12,13 @@
     = card('Test Credentials') do
       = render('test_credentials', api: api)
 
-  - if api.realm&.configured?
+  - if api.realm&.configured? && !api.realm.reconnection_required?
     .mb-2
       = collapse('Show Company Settings') do
-        = render('company', api: api)
+        = render('company', api: api, api_error: api_error)
   - else
     = card('Company') do
-      = render('company', api: api)
+      = render('company', api: api, api_error: api_error)
 
   = card('Sales Receipts') do
     .text-right.mb-2

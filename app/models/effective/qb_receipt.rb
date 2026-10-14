@@ -96,7 +96,7 @@ module Effective
       rescue => e
         result = [e.message, ("(intuit_tid: #{e.intuit_tid})" if e.try(:intuit_tid).present?)].compact.join("\n\n")
         assign_attributes(result: result)
-        error!
+        error!(notify: !e.kind_of?(EffectiveQbOnline::ReconnectionRequired))
       end
 
     end
@@ -110,10 +110,10 @@ module Effective
       completed!
     end
 
-    def error!
+    def error!(notify: true)
       errored!
       EffectiveLogger.error(result, associated: self) if defined?(EffectiveLogger)
-      EffectiveQbOnline.send_email(:sync_error, self) if EffectiveOrders.send_qb_online_sync_error
+      EffectiveQbOnline.send_email(:sync_error, self) if notify && EffectiveOrders.send_qb_online_sync_error
 
       false
     end

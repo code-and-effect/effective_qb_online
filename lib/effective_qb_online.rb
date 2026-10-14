@@ -21,17 +21,33 @@ module EffectiveQbOnline
     mailer&.constantize || Effective::QbOnlineMailer
   end
 
+  class ReconnectionRequired < StandardError; end
+
   def self.oauth2_client
-    @oauth2_client ||= OAuth2::Client.new(
+    OAuth2::Client.new(
       oauth_client_id,
       oauth_client_secret,
       site: 'https://appcenter.intuit.com/connect/oauth2',
       authorize_url: 'https://appcenter.intuit.com/connect/oauth2',
       token_url: 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer',
+      revoke_url: 'https://developer.api.intuit.com/v2/oauth2/tokens/revoke',
       connection_opts: {
         request: { open_timeout: 10, timeout: 30 }
       }
     )
+  end
+
+  # Intuit requires client authentication rather than an access-token bearer header.
+  # https://developer.intuit.com/app/developer/qbo/docs/develop/authentication-and-authorization/oauth-2.0
+  def self.revoke_token!(realm)
+    response = oauth2_client.revoke_token(
+      realm.refresh_token,
+      nil,
+      token_method: :post,
+      headers: { 'Content-Type' => 'application/json', 'Accept' => 'application/json' }
+    )
+
+    response.status == 200
   end
 
   def self.api(realm: nil)

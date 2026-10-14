@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 101) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_13_140000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -196,6 +196,8 @@ ActiveRecord::Schema[8.1].define(version: 101) do
     t.boolean "order_number_as_transaction_number", default: false
     t.string "payment_method_id"
     t.string "realm_id"
+    t.string "reconnection_reason"
+    t.datetime "reconnection_required_at", precision: nil
     t.text "refresh_token"
     t.datetime "refresh_token_expires_at", precision: nil
     t.datetime "updated_at", null: false

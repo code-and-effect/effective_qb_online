@@ -1,4 +1,11 @@
-- company_info = (api.company_info rescue nil)
+- company_info = (api.company_info rescue nil) unless api.realm.reconnection_required? || local_assigns[:api_error].present?
+
+- if api.realm.reconnection_required?
+  .alert.alert-warning
+    %p QuickBooks Online authorization is no longer valid. Reconnect using a current company administrator.
+    %p Your company settings and receipts have been preserved. After reconnecting, retry errored receipts manually.
+    = link_to 'Reconnect QuickBooks', effective_qb_online.quickbooks_oauth_path, class: 'btn btn-primary'
+
 
 - if company_info.present?
   %table.table.table-sm
@@ -50,7 +57,7 @@
     %tbody
       %tr
         %td QuickBooks API Error
-        %td= api.api_error
+        %td= api.realm.reconnection_required? ? 'Reconnection required' : (local_assigns[:api_error] || api.api_error)
 
       %tr
         %td QuickBooks Online
