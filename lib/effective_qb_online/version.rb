@@ -1,3 +1,3 @@
 module EffectiveQbOnline
-  VERSION = '0.9.12'.freeze
+  VERSION = '0.10.0'.freeze
 end
